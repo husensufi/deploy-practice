@@ -19,7 +19,7 @@ python -m pip install -r backend\requirements.txt
 Copy-Item backend\.env.example backend\.env
 ```
 
-Set a `SECRET_KEY` of at least 32 characters in `backend\.env` (generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`). The default database is the original root-level `pcos_gynocare.db`; leave `DATABASE_URL` unset unless you intentionally need an alternate persistent SQLite file. Configure the Azure OpenAI endpoint, key, deployment, and API version to enable GynoBuddy.
+Set a `SECRET_KEY` of at least 32 characters in `backend\.env` (generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`). The default database is the original root-level `pcos_gynocare.db`; leave `DATABASE_URL` unset unless you intentionally need an alternate persistent SQLite file. Configure the Azure OpenAI endpoint, key, deployment, and API version in `backend\.env` or the project root `.env` to enable GynoBuddy. The process environment takes precedence, followed by `backend\.env`, with the root `.env` used to fill missing or blank values.
 
 Start the API from the repository root:
 
@@ -46,10 +46,10 @@ Use a separate environment for the original application and ML dependencies:
 python -m venv legacy-venv
 .\legacy-venv\Scripts\Activate.ps1
 python -m pip install -r backend\legacy\requirements.txt
-uvicorn backend.legacy.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn legacy.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
 ```
 
-Open <http://localhost:8000>. It uses the same original SQLite database, legacy Jinja templates in the frontend tree, and assets under `frontend/public/static`. Run either the legacy app or the API on port 8000 at a time. Both chat interfaces use the same optional Azure OpenAI configuration in `backend/.env`; set the endpoint, key, deployment, and API version (`2024-10-21` by default).
+Open <http://localhost:8000>. It uses the same original SQLite database, legacy Jinja templates in the frontend tree, and assets under `frontend/public/static`. Run either the legacy app or the API on port 8000 at a time. Both chat interfaces use the same optional Azure OpenAI configuration from `backend/.env` or root `.env`; set the endpoint, key, deployment, and API version (`2024-10-21` by default).
 
 ## Tests and build
 
@@ -81,4 +81,4 @@ Model artifacts and reports are generated under `backend/models/`. No dataset or
 
 ## AI configuration
 
-The React app and retained legacy chatbot share the Azure OpenAI service and credentials in `backend/.env`. The provider client is initialized centrally in `backend/ai/azure_openai.py`; the configured deployment is used for every chat request. Do not put credentials in frontend environment files or source control. If required settings are missing or invalid, the chatbot reports an explicit configuration/service error.
+The React app and retained legacy chatbot share the Azure OpenAI service and credentials in `backend/ai/azure_openai.py`, reading centralized settings from the process environment and `backend/.env`, with root `.env` fallback. The configured deployment is used for every chat request. Do not put credentials in frontend environment files or source control. If required settings are missing or invalid, the chatbot reports an explicit configuration/service error.

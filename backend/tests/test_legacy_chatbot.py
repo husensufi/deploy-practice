@@ -2,8 +2,8 @@ from dataclasses import replace
 
 import pytest
 
-from backend.ai import azure_openai
-from backend.legacy import chatbot
+from ai import azure_openai
+from legacy import chatbot
 
 
 def test_legacy_chatbot_uses_shared_azure_service(monkeypatch) -> None:
@@ -12,10 +12,10 @@ def test_legacy_chatbot_uses_shared_azure_service(monkeypatch) -> None:
         "settings",
         replace(
             azure_openai.settings,
-            endpoint="https://example.openai.azure.com",
-            api_key="test-key",
-            deployment="test-deployment",
-            api_version="2024-10-21",
+            azure_openai_endpoint="https://example.openai.azure.com",
+            azure_openai_api_key="test-key",
+            azure_openai_deployment="test-deployment",
+            azure_openai_api_version="2024-10-21",
         ),
     )
     request = {}
@@ -48,9 +48,9 @@ def test_legacy_chatbot_raises_clear_missing_configuration_error(monkeypatch) ->
         "settings",
         replace(
             azure_openai.settings,
-            endpoint=None,
-            api_key=None,
-            deployment=None,
+            azure_openai_endpoint=None,
+            azure_openai_api_key=None,
+            azure_openai_deployment=None,
         ),
     )
 

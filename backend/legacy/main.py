@@ -5,7 +5,7 @@ This is the file you actually RUN. It starts the web server and
 defines every URL ("route") your website responds to.
 
 HOW TO RUN from the repository root:
-    uvicorn backend.legacy.main:app --reload
+    uvicorn legacy.main:app --app-dir backend --reload
 
 Then open your browser at:  http://127.0.0.1:8000
 
@@ -48,7 +48,7 @@ from .detection import run_pcos_screening
 from .charts import generate_all_charts
 from .pdf_report import build_pdf_report
 from .chatbot import get_ai_reply
-from backend.ai.azure_openai import AzureOpenAIConfigurationError
+from ai.azure_openai import AzureOpenAIConfigurationError
 from openai import APIError, AuthenticationError
 from pydantic import BaseModel
 

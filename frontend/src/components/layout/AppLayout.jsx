@@ -35,6 +35,8 @@ export default function AppLayout() {
               <NavLink to="/tracker">Daily tracker</NavLink>
               <NavLink to="/reports">Reports</NavLink>
               <NavLink to="/doctors">Doctors</NavLink>
+              <NavLink to="/movement">Yoga &amp; movement</NavLink>
+              <NavLink to="/games">Games</NavLink>
             </>
           )}
           {user?.role === "doctor" && <NavLink to="/doctor/profile">Clinic profile</NavLink>}

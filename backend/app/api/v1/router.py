@@ -8,6 +8,7 @@ from app.api.v1.health import router as health_router
 from app.api.v1.routes.patients import router as patients_router
 from app.api.v1.routes.reports import router as reports_router
 from app.api.v1.routes.tracker import router as tracker_router
+from app.api.v1.routes.wellness import router as wellness_router
 
 api_router = APIRouter()
 api_router.include_router(health_router)
@@ -19,3 +20,4 @@ api_router.include_router(assessments_router)
 api_router.include_router(tracker_router)
 api_router.include_router(doctors_router)
 api_router.include_router(reports_router)
+api_router.include_router(wellness_router)

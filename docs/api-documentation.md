@@ -92,11 +92,14 @@ The independent backend uses Pydantic request/response schemas. Protected endpoi
 | POST | `/api/v1/connections/{friend_id}/care-alert` or `/notify` | Create and broadcast a care alert based on today's tracker state |
 | POST | `/api/v1/connections/{friend_id}/games/invite` | JSON `{ "game_name": "Mind Match" }`; persist a game invitation in the connected user's chat |
 | WebSocket | `/api/v1/ws/chat/{friend_id}` | Cookie-authenticated chat; requires the configured frontend `Origin` and an accepted connection; persists and broadcasts messages |
+| GET | `/api/v1/wellness/tutorials` | Patient-only legacy yoga and breathing tutorial catalog, including instructions and video-search links |
+| GET | `/api/v1/wellness/tutorials/{tutorial_id}` | Patient-only detail for one yoga or breathing tutorial; unknown IDs return 404 |
+| GET | `/api/v1/wellness/games` | Patient-only catalog for the four legacy wellness games |
 
 The API reuses the original ORM models and screening/PDF modules through a narrow legacy adapter; it does not call `create_all()` and has not changed the SQLite schema. The original root routes are still in place.
 
 | POST | `/api/v1/chat/reply` | Authenticated; sends up to 20 recent user/assistant messages to the configured Azure OpenAI deployment and returns a generated reply |
 
-Azure credentials are read only by the backend from `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, and `AZURE_OPENAI_API_VERSION`. Missing configuration returns HTTP 503; provider failures return HTTP 502 without exposing credentials or upstream exception details. The React app keeps the current conversation in memory and shows service errors explicitly.
+Azure credentials are read only by the backend from the process environment, `backend/.env`, or as a fallback from the project root `.env`: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, and `AZURE_OPENAI_API_VERSION`. Process variables take precedence, followed by populated `backend/.env` values; the root `.env` fills missing or blank settings. Missing configuration returns HTTP 503; provider failures return HTTP 502 without exposing credentials or upstream exception details. The React app keeps the current conversation in memory and shows service errors explicitly.
 
-Social API routes, persistent WebSocket chat, and the React connections/chat UI are implemented. The broader migration remains in progress for games, yoga, translation switching, and final acceptance coverage. Do not add a patient-sharing API until consent and authorization semantics are designed.
+Social API routes, persistent WebSocket chat, and the React connections/chat UI are implemented. The React app now also exposes the patient-only wellness tutorial and game catalogs and client-side gameplay. Legacy HTML routes remain as a fallback. The new React wellness pages are English-only; the retained legacy locale JSON files are not wired into the React app. The legacy app has no separate exercise-routine catalog or game-score persistence. Do not add a patient-sharing API until consent and authorization semantics are designed.

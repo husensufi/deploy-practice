@@ -15,7 +15,7 @@ from app.core.config import settings
 from app.core.legacy import User
 from app.database.session import get_db
 from app.main import app
-from backend.ai import azure_openai
+from ai import azure_openai
 
 
 @pytest.fixture
@@ -140,6 +140,104 @@ def test_patient_auth_assessment_and_tracker_workflow(client: TestClient) -> Non
     assert pdf.content.startswith(b"%PDF")
 
 
+@pytest.mark.parametrize("role", ["patient", "doctor"])
+def test_logout_clears_session_cookie_and_rejects_following_requests(
+    client: TestClient,
+    role: str,
+) -> None:
+    register(client, role=role)
+    assert client.get("/api/v1/auth/me").status_code == 200
+
+    response = client.post("/api/v1/auth/logout")
+
+    assert response.status_code == 204
+    assert response.content == b""
+    assert "Max-Age=0" in response.headers["set-cookie"]
+    assert security.ACCESS_TOKEN_COOKIE not in client.cookies
+    assert client.get("/api/v1/auth/me").status_code == 401
+
+
+@pytest.mark.parametrize("role", ["patient", "doctor"])
+def test_login_authenticates_patient_and_doctor(
+    client: TestClient,
+    role: str,
+) -> None:
+    user = register(client, role=role)
+    client.cookies.clear()
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": user["email"].upper(), "password": "test-password"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["role"] == role
+    assert security.ACCESS_TOKEN_COOKIE in client.cookies
+    assert client.get("/api/v1/auth/me").json()["role"] == role
+
+
+def test_login_rejects_incorrect_password_and_unknown_account(
+    client: TestClient,
+) -> None:
+    register(client)
+    client.cookies.clear()
+
+    wrong_password = client.post(
+        "/api/v1/auth/login",
+        json={"email": "patient@example.test", "password": "incorrect"},
+    )
+    unknown_account = client.post(
+        "/api/v1/auth/login",
+        json={"email": "missing@example.test", "password": "test-password"},
+    )
+
+    assert wrong_password.status_code == 401
+    assert unknown_account.status_code == 401
+
+
+def test_registration_rejects_duplicate_email_and_invalid_payloads(
+    client: TestClient,
+) -> None:
+    register(client)
+    duplicate = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Another Person",
+            "email": "PATIENT@example.test",
+            "mobile": "+10000000002",
+            "password": "test-password",
+            "confirm_password": "test-password",
+            "role": "patient",
+        },
+    )
+    mismatched_password = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "New Person",
+            "email": "new@example.test",
+            "mobile": "+10000000003",
+            "password": "test-password",
+            "confirm_password": "different-password",
+            "role": "patient",
+        },
+    )
+    invalid_email = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "New Person",
+            "email": "invalid-email",
+            "mobile": "+10000000004",
+            "password": "test-password",
+            "confirm_password": "test-password",
+            "role": "patient",
+        },
+    )
+
+    assert duplicate.status_code == 409
+    assert mismatched_password.status_code == 422
+    assert invalid_email.status_code == 422
+
+
 def test_doctor_routes_are_role_protected_and_directory_uses_saved_profile(
     client: TestClient,
 ) -> None:
@@ -207,10 +305,10 @@ def test_chat_uses_configured_azure_openai_and_requires_authentication(
         "settings",
         replace(
             azure_openai.settings,
-            endpoint="https://example.openai.azure.com",
-            api_key="test-key",
-            deployment="test-deployment",
-            api_version="2024-10-21",
+            azure_openai_endpoint="https://example.openai.azure.com",
+            azure_openai_api_key="test-key",
+            azure_openai_deployment="test-deployment",
+            azure_openai_api_version="2024-10-21",
         ),
     )
     request_arguments = {}
@@ -264,9 +362,9 @@ def test_chat_reports_missing_azure_configuration(
         "settings",
         replace(
             azure_openai.settings,
-            endpoint=None,
-            api_key=None,
-            deployment=None,
+            azure_openai_endpoint=None,
+            azure_openai_api_key=None,
+            azure_openai_deployment=None,
         ),
     )
     response = client.post(
@@ -411,3 +509,38 @@ def test_websocket_chat_persists_messages_and_rejects_bad_origin(
     ]
     assert len(messages) == 1
     assert messages[0]["content"] == "Hello there"
+
+
+def test_patient_wellness_catalog_and_tutorial_detail(client: TestClient) -> None:
+    register(client)
+
+    tutorials = client.get("/api/v1/wellness/tutorials")
+    games = client.get("/api/v1/wellness/games")
+    butterfly = client.get("/api/v1/wellness/tutorials/butterfly")
+    missing = client.get("/api/v1/wellness/tutorials/not-a-tutorial")
+
+    assert tutorials.status_code == 200
+    assert len(tutorials.json()["tutorials"]) == 6
+    assert tutorials.json()["tutorials"][0]["id"] == "butterfly"
+    assert tutorials.json()["tutorials"][0]["instructions"]
+    assert "do not cure PCOS" in tutorials.json()["disclaimer"]
+    assert butterfly.status_code == 200
+    assert butterfly.json()["category"] == "Yoga"
+    assert butterfly.json()["duration_seconds"] == 30
+    assert len(games.json()) == 4
+    assert {game["id"] for game in games.json()} == {
+        "bubbles",
+        "runner",
+        "match",
+        "craving",
+    }
+    assert missing.status_code == 404
+
+
+def test_wellness_catalog_requires_patient_authentication(client: TestClient) -> None:
+    unauthenticated = client.get("/api/v1/wellness/tutorials")
+    assert unauthenticated.status_code == 401
+
+    register(client, role="doctor")
+    forbidden = client.get("/api/v1/wellness/games")
+    assert forbidden.status_code == 403

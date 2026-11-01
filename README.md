@@ -42,7 +42,7 @@ pcos_gynocare/
 │   └── package.json
 ├── docs/                    # Architecture, setup, API, and migration notes
 ├── .dockerignore
-├── .env.example             # Legacy chatbot key template
+├── .env.example             # Optional project-wide environment fallback
 ├── .gitignore
 ├── docker-compose.yml
 ├── README.md
@@ -97,7 +97,7 @@ Edit `backend\.env` before running the API:
 - **Use the existing project database.** The default database path is resolved from the repository location, independent of the current directory. Leave `DATABASE_URL` unset to use that default. If you set it, point it to the existing `pcos_gynocare.db` file with an absolute SQLite URL; do not use `:memory:` or a new database path unless intentionally testing against a separate database.
 - `ENVIRONMENT=development` is suitable for local development.
 - `FRONTEND_URL=http://localhost:5173` must match the browser's frontend origin. If Vite uses another port or hostname, update this setting and restart the API.
-- Both GynoBuddy chat interfaces use one backend-only Azure OpenAI service and deployment. To enable chat, configure `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, and `AZURE_OPENAI_API_VERSION` in `backend/.env`. The API version defaults to `2024-10-21`. Without the required settings, chat returns a clear configuration error rather than a canned response.
+- Both GynoBuddy chat interfaces use one backend-only Azure OpenAI service and deployment. Configure `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, and optionally `AZURE_OPENAI_API_VERSION` in `backend/.env` or the project root `.env`. Process environment settings take precedence, then `backend/.env`, then missing values fall back to the root `.env`. The API version defaults to `2024-10-21`. Without the required settings, chat returns a clear configuration error rather than a canned response.
 
 Keep all real credentials in `backend\.env`. Never paste secrets into source files, README content, screenshots, issue reports, or commits. The `.env` files are ignored by Git.
 
@@ -154,12 +154,12 @@ python -m venv legacy-venv
 .\legacy-venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r backend\legacy\requirements.txt
-uvicorn backend.legacy.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn legacy.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
 ```
 
 Then open <http://localhost:8000>. The legacy app and new API both default to port `8000`; stop one before starting the other, or configure a different port.
 
-The legacy and React GynoBuddy interfaces share the backend Azure OpenAI service. Configure the provider once by copying `backend\.env.example` to `backend\.env` and setting the Azure endpoint, API key, deployment name, and API version. The legacy app loads this same backend configuration. Keep credentials server-side; never add them to frontend environment files or expose them through API responses.
+The legacy and React GynoBuddy interfaces share the backend Azure OpenAI service. Configure the provider once in `backend\.env` or the project root `.env`; a populated `backend\.env` value takes precedence, while missing or blank settings fall back to the root file. Keep credentials server-side; never add them to frontend environment files or expose them through API responses.
 
 ## Run with Docker Compose
 
@@ -233,7 +233,7 @@ Sign in first, confirm that the connection request has been accepted, and ensure
 
 ### GynoBuddy reports that it is not configured
 
-Set the four Azure OpenAI variables in `backend\.env` and restart the API. The modular API and legacy chatbot use the same configured deployment through `backend/ai/azure_openai.py`. Never put the Azure API key in the frontend environment.
+Set the four Azure OpenAI variables in `backend\.env` or the project root `.env` and restart the API. The modular API and legacy chatbot use the same configured deployment through `backend/ai/azure_openai.py`. Never put the Azure API key in the frontend environment.
 
 ### Port 8000 is already in use
 

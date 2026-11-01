@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from openai import APIError, AuthenticationError
 
-from backend.ai import azure_openai
-from backend.ai.azure_openai import AzureOpenAIConfigurationError
+from ai import azure_openai
+from ai.azure_openai import AzureOpenAIConfigurationError
 from app.core.security import get_current_user
 from app.schemas.chat import ChatRequest, ChatResponse
 

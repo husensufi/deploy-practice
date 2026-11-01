@@ -753,6 +753,417 @@ h1 {
   clip-path: inset(50%);
 }
 
+.wellness-page {
+  max-width: 1120px;
+}
+
+.wellness-page h2,
+.wellness-section h2 {
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+}
+
+.wellness-poster-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wellness-poster-strip p {
+  display: grid;
+  min-height: 92px;
+  place-items: center;
+  margin: 0;
+  padding: 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f3d9dd, #fff);
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+  font-weight: 700;
+  text-align: center;
+}
+
+.breathing-card {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 24px;
+  border: 1px solid #ece0e2;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.breathing-orb {
+  display: grid;
+  width: 140px;
+  height: 140px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f3d9dd, #d6667a);
+  color: #3f1b3d;
+  transition: transform 4s ease-in-out;
+}
+
+.breathing-orb--expanded {
+  transform: scale(1.18);
+}
+
+.wellness-section {
+  display: grid;
+  gap: 16px;
+}
+
+.wellness-section > h2 {
+  margin: 0;
+}
+
+.wellness-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 18px;
+}
+
+.wellness-card {
+  overflow: hidden;
+  border: 1px solid #ece0e2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 35px rgb(63 27 61 / 5%);
+}
+
+.wellness-card-art,
+.wellness-game-art {
+  display: grid;
+  min-height: 148px;
+  place-items: center;
+  background: linear-gradient(135deg, #f3d9dd, #fbf5f2);
+  font-size: 4rem;
+}
+
+.wellness-card-art--2,
+.wellness-game-art--runner {
+  background: linear-gradient(135deg, #d6667a, #f3d9dd);
+}
+
+.wellness-card-art--3,
+.wellness-game-art--match {
+  background: linear-gradient(135deg, #f0dfc2, #fff);
+}
+
+.wellness-card-art--4,
+.wellness-game-art--craving {
+  background: linear-gradient(135deg, #d7c3d5, #fff);
+}
+
+.wellness-card-art--5,
+.wellness-game-art--bubbles {
+  background: linear-gradient(135deg, #8ec9be, #eaf6f1);
+}
+
+.wellness-card-art--6 {
+  background: linear-gradient(135deg, #d9e8e4, #fff);
+}
+
+.wellness-card-body {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+
+.wellness-card-body h2,
+.wellness-card-body h3 {
+  margin: 0;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+}
+
+.wellness-card-body p {
+  margin: 0;
+  color: #6e5f6c;
+  line-height: 1.55;
+}
+
+.wellness-card-meta {
+  color: #2f7a6b !important;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.wellness-card-body .button {
+  justify-self: start;
+  margin-top: 6px;
+}
+
+.wellness-card--horizontal {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.wellness-card--horizontal .wellness-card-art {
+  height: 100%;
+}
+
+.exercise-source-note {
+  padding: 20px;
+  border-left: 4px solid #2f7a6b;
+  border-radius: 10px;
+  background: #eaf6f1;
+}
+
+.exercise-source-note h2 {
+  margin: 0 0 8px;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+}
+
+.exercise-source-note p {
+  color: #423746;
+  line-height: 1.6;
+}
+
+.tutorial-instructions ol {
+  display: grid;
+  gap: 12px;
+  padding-left: 24px;
+  color: #423746;
+  line-height: 1.65;
+}
+
+.tutorial-instructions .button {
+  margin-top: 12px;
+}
+
+.game-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.game-invite-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 0 16px;
+}
+
+.game-invite-fields > button,
+.game-invite-fields > p {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.game-play-card {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+
+.game-score {
+  margin: 0;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bubble-game {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #1a0f22, #3f1b3d);
+}
+
+.floating-bubble {
+  position: absolute;
+  left: var(--bubble-x);
+  bottom: -70px;
+  width: 46px;
+  height: 46px;
+  border: 2px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #fff8, #d6667a99 55%, #8ec9be99);
+  box-shadow: inset -7px -8px 18px rgb(255 255 255 / 25%), 0 0 18px rgb(255 255 255 / 12%);
+  cursor: pointer;
+  animation: bubble-float 16s linear var(--bubble-delay) infinite;
+}
+
+.floating-bubble--1 { width: 58px; height: 58px; }
+.floating-bubble--2 { width: 38px; height: 38px; }
+.floating-bubble--3 { width: 68px; height: 68px; }
+.floating-bubble--4 { width: 50px; height: 50px; }
+
+@keyframes bubble-float {
+  from { transform: translateY(0) translateX(0); }
+  to { transform: translateY(-520px) translateX(24px); }
+}
+
+.bubble-game .game-score {
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  left: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.bubble-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  left: 12px;
+  color: #fff;
+  text-align: center;
+}
+
+.runner-game {
+  display: grid;
+  width: min(100%, 680px);
+  gap: 14px;
+}
+
+.runner-track {
+  display: grid;
+  height: 370px;
+  grid-template-columns: repeat(3, 1fr);
+  overflow: hidden;
+  border: 1px solid #ece0e2;
+  border-radius: 14px;
+  background: linear-gradient(#fbf5f2, #f3d9dd);
+}
+
+.runner-lane {
+  position: relative;
+  border-right: 2px dashed #d9cbd3;
+}
+
+.runner-lane:last-child {
+  border-right: 0;
+}
+
+.runner-player,
+.runner-item {
+  position: absolute;
+  left: 50%;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.8rem;
+  transform: translateX(-50%);
+}
+
+.runner-player {
+  bottom: 12px;
+  background: #fff;
+}
+
+.runner-item {
+  top: calc(12px + var(--row) * 70px);
+}
+
+.runner-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.button-secondary {
+  border: 1px solid #d9cbd3;
+  background: #fff;
+  color: #3f1b3d;
+}
+
+.game-result,
+.craving-result {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.match-grid {
+  display: grid;
+  width: min(100%, 440px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px auto;
+}
+
+.match-card {
+  aspect-ratio: 1;
+  border: 1px solid #d9cbd3;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3f1b3d, #6b3568);
+  color: #fff;
+  font-size: clamp(1.3rem, 5vw, 2rem);
+  cursor: pointer;
+}
+
+.match-card--flipped {
+  background: #fff;
+  color: #3f1b3d;
+}
+
+.match-card--matched {
+  opacity: 0.55;
+}
+
+.craving-box {
+  width: min(100%, 600px);
+  padding: clamp(20px, 5vw, 36px);
+  border: 1px solid #ece0e2;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.craving-options {
+  display: grid;
+  gap: 12px;
+}
+
+.craving-result > span {
+  font-size: 3.5rem;
+}
+
+.wellness-dialog-backdrop {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(31 20 32 / 60%);
+}
+
+.wellness-dialog {
+  display: grid;
+  width: min(100%, 520px);
+  justify-items: center;
+  gap: 12px;
+  padding: clamp(24px, 5vw, 40px);
+  border-radius: 18px;
+  background: #fff;
+  text-align: center;
+}
+
+.wellness-game-icon {
+  margin: 0;
+  font-size: 3rem;
+}
+
+.session-count {
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .portal-header {
     align-items: flex-start;
@@ -792,6 +1203,27 @@ h1 {
 
   .connection-card__details {
     min-width: calc(100% - 70px);
+  }
+
+  .wellness-poster-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .breathing-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .wellness-card--horizontal {
+    grid-template-columns: 1fr;
+  }
+
+  .wellness-card--horizontal .wellness-card-art {
+    min-height: 120px;
+  }
+
+  .game-invite-fields {
+    grid-template-columns: 1fr;
   }
 
   .chat-compose,

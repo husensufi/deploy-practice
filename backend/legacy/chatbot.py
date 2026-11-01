@@ -1,4 +1,4 @@
-from backend.ai import azure_openai
+from ai import azure_openai
 
 # This system prompt is what makes GynoBuddy's personality and safety
 # rules consistent across every message, while still letting each

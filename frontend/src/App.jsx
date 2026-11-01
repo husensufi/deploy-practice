@@ -12,6 +12,12 @@ const ConnectionsPage = lazy(() => import("./pages/connections/ConnectionsPage.j
 const DoctorProfilePage = lazy(() => import("./pages/doctors/DoctorProfilePage.jsx"));
 const DoctorsPage = lazy(() => import("./pages/doctors/DoctorsPage.jsx"));
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
+const GamesPage = lazy(() => import("./pages/wellness/GamesPage.jsx"));
+const GamePlayPage = lazy(() => import("./pages/wellness/GamePlayPage.jsx"));
+const MovementPage = lazy(() => import("./pages/wellness/MovementPage.jsx"));
+const MovementTutorialPage = lazy(
+  () => import("./pages/wellness/MovementTutorialPage.jsx"),
+);
 const ReportsPage = lazy(() => import("./pages/reports/ReportsPage.jsx"));
 const TrackerPage = lazy(() => import("./pages/tracker/TrackerPage.jsx"));
 
@@ -32,6 +38,10 @@ export default function App() {
               <Route path="/tracker" element={<TrackerPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/doctors" element={<DoctorsPage />} />
+              <Route path="/movement" element={<MovementPage />} />
+              <Route path="/movement/:tutorialId" element={<MovementTutorialPage />} />
+              <Route path="/games" element={<GamesPage />} />
+              <Route path="/games/:gameId" element={<GamePlayPage />} />
             </Route>
             <Route element={<ProtectedRoute roles={["doctor"]} />}>
               <Route path="/doctor/profile" element={<DoctorProfilePage />} />

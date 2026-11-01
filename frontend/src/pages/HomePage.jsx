@@ -72,6 +72,16 @@ function PatientDashboard() {
           <p className="muted">Browse doctor profiles registered in GynoCare.</p>
           <Link className="text-link" to="/doctors">Explore doctors</Link>
         </article>
+        <article className="summary-card">
+          <h2>Yoga &amp; movement</h2>
+          <p className="muted">Browse the original gentle yoga poses and guided breathing session.</p>
+          <Link className="text-link" to="/movement">Explore tutorials</Link>
+        </article>
+        <article className="summary-card">
+          <h2>Wellness games</h2>
+          <p className="muted">Take a short, self-paced mood break with the original games.</p>
+          <Link className="text-link" to="/games">Play a game</Link>
+        </article>
       </section>
     </>
   );

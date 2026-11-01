@@ -2,12 +2,24 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 from sqlalchemy.engine import URL, make_url
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_ROOT = PROJECT_ROOT / "backend"
-load_dotenv(BACKEND_ROOT / ".env")
+
+
+def load_project_environment(
+    project_root: Path = PROJECT_ROOT,
+    backend_root: Path = BACKEND_ROOT,
+) -> None:
+    load_dotenv(backend_root / ".env")
+    for name, value in dotenv_values(project_root / ".env").items():
+        if value and not os.getenv(name):
+            os.environ[name] = value
+
+
+load_project_environment()
 
 
 def _database_url() -> URL:
@@ -36,6 +48,10 @@ class Settings:
     environment: str
     secret_key: str | None
     frontend_url: str
+    azure_openai_endpoint: str | None
+    azure_openai_api_key: str | None
+    azure_openai_deployment: str | None
+    azure_openai_api_version: str
 
 
 settings = Settings(
@@ -43,4 +59,8 @@ settings = Settings(
     environment=os.getenv("ENVIRONMENT", "development"),
     secret_key=os.getenv("SECRET_KEY"),
     frontend_url=os.getenv("FRONTEND_URL", "http://localhost:5173"),
+    azure_openai_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    azure_openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    azure_openai_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
+    azure_openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21"),
 )

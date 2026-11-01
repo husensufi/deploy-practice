@@ -11,7 +11,7 @@ class RegisterRequest(BaseModel):
     mobile: str = Field(min_length=1, max_length=50)
     password: str = Field(min_length=1)
     confirm_password: str = Field(min_length=1)
-    role: Literal["patient", "doctor"] = "patient"
+    role: Literal["patient"] = "patient"
 
     @field_validator("email")
     @classmethod

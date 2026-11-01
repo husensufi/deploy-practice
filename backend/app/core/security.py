@@ -84,18 +84,32 @@ def get_current_user(
 
 
 def require_doctor(user: User = Depends(get_current_user)) -> User:
-    if user.role != "doctor":
+    if user.role != "doctor" or not getattr(user, "is_active", True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Doctor access is required.",
+        )
+    if getattr(user, "approval_status", "approved") not in {"approved", None}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your doctor access has not been approved.",
         )
     return user
 
 
 def require_patient(user: User = Depends(get_current_user)) -> User:
-    if user.role != "patient":
+    if user.role != "patient" or not getattr(user, "is_active", True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Patient access is required.",
+        )
+    return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    if user.role != "admin" or not getattr(user, "is_active", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator access is required.",
         )
     return user

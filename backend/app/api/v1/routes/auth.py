@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.admin import seed_admin_account
 from app.core.legacy import User, hash_password, verify_password
 from app.core.security import (
     ACCESS_TOKEN_COOKIE,
@@ -28,6 +29,13 @@ def register(
     db: Session = Depends(get_db),
 ) -> User:
     ensure_auth_configured()
+    seed_admin_account(db)
+
+    if body.role != "patient":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Public registration is available only for patients.",
+        )
 
     existing_email = db.query(User.id).filter(User.email == body.email).first()
     if existing_email:
@@ -65,6 +73,7 @@ def login(
     db: Session = Depends(get_db),
 ) -> User:
     ensure_auth_configured()
+    seed_admin_account(db)
 
     user = db.query(User).filter(User.email == body.email).first()
     if user is None or not verify_password(body.password, user.hashed_password):

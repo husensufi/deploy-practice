@@ -27,19 +27,31 @@ export default function AppLayout() {
           <span>Ashwini Asangi PCOS GynoCare</span>
         </Link>
         <nav className="portal-nav" aria-label="Main navigation">
-          <NavLink to="/home">Dashboard</NavLink>
-          <NavLink to="/connections">Friends &amp; family</NavLink>
-          {user?.role === "patient" && (
+          {user?.role === "admin" ? (
             <>
-              <NavLink to="/assessment">Assessment</NavLink>
-              <NavLink to="/tracker">Daily tracker</NavLink>
-              <NavLink to="/reports">Reports</NavLink>
-              <NavLink to="/doctors">Doctors</NavLink>
-              <NavLink to="/movement">Yoga &amp; movement</NavLink>
-              <NavLink to="/games">Games</NavLink>
+              <NavLink to="/admin">Dashboard</NavLink>
+              <NavLink to="/admin">Patients</NavLink>
+              <NavLink to="/admin">Doctors</NavLink>
+              <NavLink to="/admin">Approvals</NavLink>
+              <NavLink to="/admin">Reports</NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/home">Dashboard</NavLink>
+              <NavLink to="/connections">Friends &amp; family</NavLink>
+              {user?.role === "patient" && (
+                <>
+                  <NavLink to="/assessment">Assessment</NavLink>
+                  <NavLink to="/tracker">Daily tracker</NavLink>
+                  <NavLink to="/reports">Reports</NavLink>
+                  <NavLink to="/doctors">Doctors</NavLink>
+                  <NavLink to="/movement">Yoga &amp; movement</NavLink>
+                  <NavLink to="/games">Games</NavLink>
+                </>
+              )}
+              {user?.role === "doctor" && <NavLink to="/doctor/profile">Clinic profile</NavLink>}
             </>
           )}
-          {user?.role === "doctor" && <NavLink to="/doctor/profile">Clinic profile</NavLink>}
           <button type="button" className="nav-logout" onClick={handleLogout}>
             Log out
           </button>

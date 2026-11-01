@@ -8,7 +8,7 @@ import { useAuth } from "../../contexts/AuthContext.jsx";
 
 const signupSchema = z
   .object({
-    role: z.enum(["patient", "doctor"]),
+    role: z.literal("patient"),
     full_name: z.string().trim().min(1, "Enter your full name."),
     email: z.string().email("Enter a valid email address."),
     mobile: z.string().trim().min(1, "Enter your mobile number."),
@@ -54,14 +54,10 @@ export default function SignupPage() {
       <section className="auth-card" aria-labelledby="signup-heading">
         <span className="eyebrow">PCOS GynoCare</span>
         <h1 id="signup-heading">Create your account</h1>
-        <p className="muted">Choose the account type that describes you.</p>
+        <p className="muted">Create a patient account to access health tracking and appointment services.</p>
         {requestError && <p className="form-error" role="alert">{requestError}</p>}
         <form onSubmit={handleSubmit(submit)} noValidate>
-          <fieldset className="role-field">
-            <legend>I am a</legend>
-            <label><input type="radio" value="patient" {...register("role")} /> Patient</label>
-            <label><input type="radio" value="doctor" {...register("role")} /> Doctor</label>
-          </fieldset>
+          <input type="hidden" value="patient" {...register("role")} />
           <label className="form-field">
             Full name
             <input autoComplete="name" {...register("full_name")} />

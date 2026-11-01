@@ -52,6 +52,8 @@ class Settings:
     azure_openai_api_key: str | None
     azure_openai_deployment: str | None
     azure_openai_api_version: str
+    admin_email: str | None
+    admin_password: str | None
 
 
 settings = Settings(
@@ -63,4 +65,6 @@ settings = Settings(
     azure_openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
     azure_openai_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
     azure_openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-10-21"),
+    admin_email=os.getenv("ADMIN_EMAIL"),
+    admin_password=os.getenv("ADMIN_PASSWORD"),
 )

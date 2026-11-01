@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
@@ -123,7 +124,122 @@ function DoctorDashboard() {
   );
 }
 
+function AdminAIWorkspace() {
+  const [question, setQuestion] = useState("How many patients registered this month?");
+  const [answer, setAnswer] = useState("");
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function askAssistant() {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await apiRequest("/ai/admin/assistant", {
+        method: "POST",
+        data: { question },
+      });
+      setAnswer(response.answer || "No answer was returned.");
+    } catch (requestError) {
+      setError(requestError?.response?.data?.detail || "Could not contact the admin AI assistant.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function generateContent() {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await apiRequest("/ai/admin/content-generator", {
+        method: "POST",
+        data: { category: "pcos_education", topic: "Healthy lifestyle habits for PCOS", audience: "patients" },
+      });
+      setContent(response.draft || "No draft was generated.");
+    } catch (requestError) {
+      setError(requestError?.response?.data?.detail || "Could not generate AI content.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section className="summary-card">
+      <h2>AI Admin Assistant</h2>
+      <label className="form-field">
+        Ask the platform assistant
+        <textarea value={question} onChange={(event) => setQuestion(event.target.value)} rows={3} />
+      </label>
+      <div style={{ display: "flex", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
+        <button className="button button-primary" type="button" disabled={loading} onClick={askAssistant}>
+          {loading ? "Processing..." : "Ask AI"}
+        </button>
+        <button className="button button-secondary" type="button" onClick={generateContent} disabled={loading}>
+          Generate content draft
+        </button>
+      </div>
+      {error && <p className="page-error" role="alert">{error}</p>}
+      {answer && (
+        <div style={{ marginTop: 12 }}>
+          <h3>Assistant response</h3>
+          <p>{answer}</p>
+        </div>
+      )}
+      {content && (
+        <div style={{ marginTop: 12 }}>
+          <h3>AI-generated draft</h3>
+          <p style={{ whiteSpace: "pre-wrap" }}>{content}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AdminDashboard() {
+  const { user } = useAuth();
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin-dashboard"],
+    queryFn: () => apiRequest("/admin/dashboard"),
+  });
+
+  if (isLoading) return <LoadingState label="Loading admin dashboard..." />;
+  if (error) return <ErrorState error={error} fallback="Could not load the admin dashboard." />;
+
+  return (
+    <>
+      <section className="page-heading">
+        <span className="eyebrow">Admin portal</span>
+        <h1>Welcome, {user.full_name}</h1>
+        <p>Monitor patient growth, doctor approvals, and platform performance.</p>
+      </section>
+      <section className="summary-grid" aria-label="Admin overview">
+        <article className="summary-card"><h2>Total patients</h2><p>{data.total_patients}</p></article>
+        <article className="summary-card"><h2>Doctors</h2><p>{data.total_doctors}</p></article>
+        <article className="summary-card"><h2>Approved doctors</h2><p>{data.approved_doctors}</p></article>
+        <article className="summary-card"><h2>Pending approvals</h2><p>{data.pending_doctor_approvals}</p></article>
+        <article className="summary-card"><h2>Rejected</h2><p>{data.rejected_doctors}</p></article>
+        <article className="summary-card"><h2>Active doctors</h2><p>{data.active_doctors}</p></article>
+      </section>
+      <section className="summary-card">
+        <h2>Recent patient registrations</h2>
+        {data.recent_patient_registrations.length ? (
+          <ul className="compact-list">
+            {data.recent_patient_registrations.map((patient) => (
+              <li key={patient.id}>{patient.full_name} · {patient.email}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">No patients have registered yet.</p>
+        )}
+      </section>
+      <AdminAIWorkspace />
+    </>
+  );
+}
+
 export default function HomePage() {
   const { user } = useAuth();
-  return user.role === "doctor" ? <DoctorDashboard /> : <PatientDashboard />;
+  if (user.role === "admin") return <AdminDashboard />;
+  if (user.role === "doctor") return <DoctorDashboard />;
+  return <PatientDashboard />;
 }

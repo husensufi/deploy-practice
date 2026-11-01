@@ -8,7 +8,7 @@ In Part 2 we will add: DailyLog, PCOSAssessment, DoctorProfile, etc.
 in a new file called models_tracker.py so this file doesn't get messy.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, Text
 from datetime import datetime
 from .database import Base
 
@@ -24,10 +24,15 @@ class User(Base):
     # We NEVER store the real password. Only its hashed (scrambled) version.
     hashed_password = Column(String, nullable=False)
 
-    # "patient" or "doctor" — decides which dashboard the user sees.
+    # "patient", "doctor", or "admin" — decides which dashboard the user sees.
     role = Column(String, default="patient")
+    is_active = Column(Boolean, default=True, nullable=False)
+    approval_status = Column(String, default="approved")
+    rejection_reason = Column(Text, nullable=True)
+    admin_notes = Column(Text, nullable=True)
 
     # Preferred language: "en", "hi", or "kn"
     preferred_language = Column(String, default="en")
 
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

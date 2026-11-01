@@ -43,6 +43,9 @@ export default function App() {
               <Route path="/games" element={<GamesPage />} />
               <Route path="/games/:gameId" element={<GamePlayPage />} />
             </Route>
+            <Route element={<ProtectedRoute roles={["admin"]} />}>
+              <Route path="/admin" element={<HomePage />} />
+            </Route>
             <Route element={<ProtectedRoute roles={["doctor"]} />}>
               <Route path="/doctor/profile" element={<DoctorProfilePage />} />
             </Route>

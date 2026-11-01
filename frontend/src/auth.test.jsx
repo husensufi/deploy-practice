@@ -76,7 +76,7 @@ describe("Authentication forms", () => {
     expect(await screen.findByText("Home portal")).toBeTruthy();
   });
 
-  it("validates password confirmation and submits a doctor registration", async () => {
+  it("validates password confirmation and submits a patient registration", async () => {
     registerMock.mockResolvedValue(undefined);
     render(
       <MemoryRouter initialEntries={["/signup"]}>
@@ -87,12 +87,11 @@ describe("Authentication forms", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByLabelText("Doctor"));
     fireEvent.change(screen.getByLabelText("Full name"), {
-      target: { value: "Test Doctor" },
+      target: { value: "Test Patient" },
     });
     fireEvent.change(screen.getByLabelText("Email address"), {
-      target: { value: "doctor@example.test" },
+      target: { value: "patient@example.test" },
     });
     fireEvent.change(screen.getByLabelText("Mobile number"), {
       target: { value: "+10000000000" },
@@ -115,9 +114,9 @@ describe("Authentication forms", () => {
 
     await waitFor(() => {
       expect(registerMock).toHaveBeenCalledWith({
-        role: "doctor",
-        full_name: "Test Doctor",
-        email: "doctor@example.test",
+        role: "patient",
+        full_name: "Test Patient",
+        email: "patient@example.test",
         mobile: "+10000000000",
         password: "test-password",
         confirm_password: "test-password",

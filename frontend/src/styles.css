@@ -1,0 +1,807 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Work Sans", "Segoe UI", sans-serif;
+  color: #2b2130;
+  background: #fbf5f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.app-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.welcome-card {
+  width: min(100%, 680px);
+  padding: clamp(28px, 6vw, 56px);
+  border: 1px solid #ece0e2;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgb(63 27 61 / 8%);
+}
+
+.eyebrow {
+  color: #2f7a6b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 12px 0;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+}
+
+.welcome-card p {
+  max-width: 54ch;
+  color: #6e5f6c;
+  line-height: 1.7;
+}
+
+.service-status {
+  margin-top: 28px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #f3f0f3;
+  font-size: 0.92rem;
+}
+
+.service-status--connected {
+  background: #eaf6f1;
+  color: #1f5a4e;
+}
+
+.service-status--unavailable {
+  background: #fff1f0;
+  color: #8a3030;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card,
+.form-card,
+.summary-card,
+.chart-card,
+.result-panel {
+  border: 1px solid #ece0e2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 35px rgb(63 27 61 / 5%);
+}
+
+.auth-card {
+  width: min(100%, 500px);
+  padding: clamp(24px, 5vw, 40px);
+}
+
+.auth-card h1,
+.page-heading h1 {
+  margin: 10px 0;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+}
+
+.muted,
+.page-heading p {
+  color: #6e5f6c;
+  line-height: 1.6;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 16px 0;
+  color: #2b2130;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d9cbd3;
+  border-radius: 9px;
+  background: #fff;
+  color: #2b2130;
+  font: inherit;
+}
+
+.form-field textarea {
+  resize: vertical;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  outline: 3px solid rgb(214 102 122 / 20%);
+  border-color: #d6667a;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 9px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.button-primary {
+  background: #3f1b3d;
+  color: #fff;
+}
+
+.button-primary:hover {
+  background: #6b3568;
+}
+
+.auth-card .button,
+.form-card > .button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.auth-footer {
+  margin: 22px 0 0;
+  color: #6e5f6c;
+  text-align: center;
+}
+
+.auth-footer a,
+.text-link {
+  color: #a53e59;
+  font-weight: 700;
+}
+
+.role-field,
+.symptom-fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #ece0e2;
+  border-radius: 10px;
+}
+
+.role-field legend,
+.symptom-fieldset legend {
+  padding: 0 5px;
+  color: #3f1b3d;
+  font-weight: 700;
+}
+
+.role-field label,
+.checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.form-error,
+.page-error,
+.field-error {
+  color: #9c2f35;
+}
+
+.form-error,
+.page-error {
+  padding: 12px 14px;
+  border: 1px solid #f0c4c6;
+  border-radius: 9px;
+  background: #fff1f0;
+}
+
+.field-error {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.portal-shell {
+  min-height: 100vh;
+}
+
+.portal-header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px clamp(18px, 4vw, 56px);
+  border-bottom: 1px solid #ece0e2;
+  background: #fff;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d6667a, #3f1b3d);
+}
+
+.portal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.portal-nav a,
+.nav-logout {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #6e5f6c;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.portal-nav a.active,
+.portal-nav a:hover,
+.nav-logout:hover {
+  background: #f3d9dd;
+  color: #3f1b3d;
+}
+
+.portal-content {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: clamp(22px, 5vw, 54px) clamp(18px, 4vw, 32px);
+}
+
+.content-page {
+  display: grid;
+  gap: 24px;
+}
+
+.page-heading {
+  margin-bottom: 4px;
+}
+
+.page-heading p {
+  max-width: 70ch;
+}
+
+.summary-grid,
+.charts-grid,
+.form-grid,
+.doctor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.summary-card,
+.chart-card,
+.result-panel,
+.form-card {
+  padding: clamp(18px, 3vw, 26px);
+}
+
+.summary-card h2,
+.chart-card h2,
+.history-section h2 {
+  margin: 0 0 12px;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+  font-size: 1.28rem;
+}
+
+.summary-card p {
+  line-height: 1.5;
+}
+
+.summary-card .text-link,
+.summary-card .button {
+  margin-top: 8px;
+}
+
+.compact-list {
+  padding-left: 20px;
+  color: #6e5f6c;
+  line-height: 1.8;
+}
+
+.risk-label {
+  font-weight: 700;
+}
+
+.risk-label--low {
+  color: #2f7a6b;
+}
+
+.risk-label--moderate {
+  color: #9b6b10;
+}
+
+.risk-label--high {
+  color: #a53e59;
+}
+
+.form-card {
+  display: grid;
+  gap: 8px;
+}
+
+.form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+}
+
+.field-span {
+  grid-column: 1 / -1;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.checkbox-field {
+  color: #423746;
+  line-height: 1.5;
+}
+
+.result-panel {
+  border-left: 5px solid #2f7a6b;
+}
+
+.risk-panel--moderate {
+  border-left-color: #c98a2e;
+}
+
+.risk-panel--high {
+  border-left-color: #d6667a;
+}
+
+.medical-disclaimer,
+.empty-state {
+  padding: 14px 16px;
+  border: 1px solid #ece0e2;
+  border-radius: 10px;
+  background: #fff;
+  color: #6e5f6c;
+  line-height: 1.6;
+}
+
+.history-section {
+  margin-top: 12px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid #ece0e2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ece0e2;
+  white-space: nowrap;
+}
+
+.data-table th {
+  background: #f3d9dd;
+  color: #3f1b3d;
+}
+
+.charts-grid {
+  align-items: stretch;
+}
+
+.chart-card {
+  min-width: 0;
+}
+
+.heading-with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.doctor-card {
+  display: flex;
+  gap: 18px;
+}
+
+.doctor-avatar {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #f3d9dd;
+  color: #3f1b3d;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.connection-form-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+  gap: 18px;
+}
+
+.connections-section {
+  display: grid;
+  gap: 12px;
+}
+
+.connections-section h2,
+.form-card h2 {
+  margin: 0;
+  color: #3f1b3d;
+  font-family: Georgia, serif;
+}
+
+.connection-list {
+  display: grid;
+  gap: 12px;
+}
+
+.connection-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #ece0e2;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.connection-card__details {
+  flex: 1;
+}
+
+.connection-card__details p {
+  margin: 5px 0 0;
+}
+
+.button-care {
+  background: #fff1f0;
+  color: #9c2f35;
+}
+
+.chat-status {
+  color: #6e5f6c;
+  font-size: 0.9rem;
+}
+
+.chat-status--connected {
+  color: #1f5a4e;
+}
+
+.chat-panel {
+  display: grid;
+  min-height: 420px;
+  grid-template-rows: 1fr auto;
+  overflow: hidden;
+  border: 1px solid #ece0e2;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.chat-messages {
+  display: flex;
+  min-height: 300px;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.chat-message {
+  width: fit-content;
+  max-width: min(78%, 620px);
+  padding: 12px 14px;
+  border-radius: 14px 14px 14px 3px;
+  background: #f3f0f3;
+  overflow-wrap: anywhere;
+}
+
+.chat-message--own {
+  align-self: flex-end;
+  border-radius: 14px 14px 3px 14px;
+  background: #f3d9dd;
+}
+
+.chat-message p {
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+
+.chat-message time {
+  color: #6e5f6c;
+  font-size: 0.75rem;
+}
+
+.chat-compose,
+.game-invite-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px;
+  border-top: 1px solid #ece0e2;
+}
+
+.chat-compose textarea {
+  min-width: 0;
+  min-height: 46px;
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d9cbd3;
+  border-radius: 9px;
+  font: inherit;
+  resize: vertical;
+}
+
+.game-invite-form {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  border: 1px solid #ece0e2;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.game-invite-form .form-field {
+  min-width: min(100%, 260px);
+  margin: 0;
+}
+
+.chat-reconnect {
+  margin-left: 12px;
+}
+
+.success-message {
+  color: #1f5a4e;
+}
+
+.page-status {
+  color: #6e5f6c;
+}
+
+.gynobuddy {
+  position: fixed;
+  z-index: 20;
+  right: 24px;
+  bottom: 24px;
+}
+
+.gynobuddy-launch {
+  min-height: 52px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 26px;
+  background: #3f1b3d;
+  box-shadow: 0 8px 24px rgb(63 27 61 / 24%);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gynobuddy-panel {
+  display: grid;
+  width: min(380px, calc(100vw - 32px));
+  height: min(520px, calc(100vh - 48px));
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  border: 1px solid #ece0e2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 48px rgb(63 27 61 / 20%);
+}
+
+.gynobuddy-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: #3f1b3d;
+  color: #fff;
+}
+
+.gynobuddy-header div {
+  display: grid;
+  gap: 5px;
+}
+
+.gynobuddy-header span {
+  color: #f3d9dd;
+  font-size: 0.78rem;
+}
+
+.gynobuddy-close {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gynobuddy-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.gynobuddy-message,
+.gynobuddy-empty,
+.gynobuddy-typing {
+  width: fit-content;
+  max-width: 90%;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f3f0f3;
+  color: #423746;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.gynobuddy-message--user {
+  align-self: flex-end;
+  background: #f3d9dd;
+}
+
+.gynobuddy-message--error {
+  background: #fff1f0;
+  color: #9c2f35;
+}
+
+.gynobuddy-typing,
+.gynobuddy-empty {
+  color: #6e5f6c;
+  font-style: italic;
+}
+
+.gynobuddy-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #ece0e2;
+}
+
+.gynobuddy-form textarea {
+  min-width: 0;
+  min-height: 44px;
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #d9cbd3;
+  border-radius: 9px;
+  font: inherit;
+  resize: vertical;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 760px) {
+  .portal-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .portal-nav {
+    gap: 5px;
+  }
+
+  .summary-grid,
+  .charts-grid,
+  .form-grid,
+  .doctor-grid,
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .heading-with-action {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .doctor-card {
+    flex-direction: column;
+  }
+
+  .connection-form-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .connection-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .connection-card__details {
+    min-width: calc(100% - 70px);
+  }
+
+  .chat-compose,
+  .game-invite-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gynobuddy {
+    right: 16px;
+    bottom: 16px;
+  }
+}

@@ -15,11 +15,17 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.pytest_cache/
 
 # Local database files
 *.db
 *.sqlite
 *.sqlite3
+
+# Frontend dependencies and build output
+node_modules/
+frontend/dist/
+npm-debug.log*
 
 # IDE and OS files
 .vscode/

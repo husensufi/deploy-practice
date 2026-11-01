@@ -12,7 +12,8 @@ from starlette.websockets import WebSocketDisconnect
 from app.core import security
 from app.api.v1.routes import chat_websocket as websocket_routes
 from app.core.config import settings
-from app.core.legacy import User
+from app.core.admin import seed_admin_account
+from app.core.legacy import User, hash_password, verify_password
 from app.database.session import get_db
 from app.main import app
 from ai import azure_openai
@@ -210,6 +211,42 @@ def test_login_rejects_incorrect_password_and_unknown_account(
     assert unknown_account.status_code == 401
 
 
+def test_configured_admin_credentials_sync_on_seed_and_authenticate(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    email = "configured-admin@example.test"
+    password = "configured-admin-test-password"
+    with app.state.test_session() as db:
+        db.add(
+            User(
+                full_name="Configured Admin",
+                email=email,
+                mobile=None,
+                hashed_password=hash_password("outdated-admin-password"),
+                role="admin",
+                is_active=True,
+                approval_status="approved",
+            )
+        )
+        db.commit()
+
+    monkeypatch.setenv("ADMIN_EMAIL", email)
+    monkeypatch.setenv("ADMIN_PASSWORD", password)
+    with app.state.test_session() as db:
+        configured_admin = seed_admin_account(db)
+        assert configured_admin is not None
+        assert verify_password(password, configured_admin.hashed_password)
+
+    client.cookies.clear()
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert response.status_code == 200
+    assert response.json()["role"] == "admin"
+
+
 def test_registration_rejects_duplicate_email_and_invalid_payloads(
     client: TestClient,
 ) -> None:
@@ -280,6 +317,7 @@ def test_doctor_routes_are_role_protected_and_directory_uses_saved_profile(
             "city": "Test City",
             "address": "1 Test Road",
             "phone": "+10000000000",
+            "years_experience": 12,
             "consultation_hours": "Weekdays",
             "about": "",
             "photo_url": "",
@@ -287,10 +325,12 @@ def test_doctor_routes_are_role_protected_and_directory_uses_saved_profile(
     )
     assert saved.status_code == 200
     assert saved.json()["user_id"] == doctor["id"]
+    assert saved.json()["years_experience"] == 12
 
     directory = client.get("/api/v1/doctors")
     assert directory.status_code == 200
     assert directory.json()[0]["clinic_name"] == "Test Clinic"
+    assert directory.json()[0]["years_experience"] == 12
 
 
 def test_registration_fails_before_writing_without_auth_secret(

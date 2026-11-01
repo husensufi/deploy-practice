@@ -8,6 +8,7 @@ import SignupPage from "./pages/auth/SignupPage.jsx";
 
 const AssessmentPage = lazy(() => import("./pages/assessment/AssessmentPage.jsx"));
 const AdminAppointmentsPage = lazy(() => import("./pages/appointments/AdminAppointmentsPage.jsx"));
+const AdminManagementPage = lazy(() => import("./pages/admin/AdminManagementPage.jsx"));
 const DoctorAppointmentsPage = lazy(() => import("./pages/appointments/DoctorAppointmentsPage.jsx"));
 const PatientAppointmentsPage = lazy(() => import("./pages/appointments/PatientAppointmentsPage.jsx"));
 const ConnectionChatPage = lazy(() => import("./pages/connections/ConnectionChatPage.jsx"));
@@ -15,6 +16,7 @@ const ConnectionsPage = lazy(() => import("./pages/connections/ConnectionsPage.j
 const DoctorProfilePage = lazy(() => import("./pages/doctors/DoctorProfilePage.jsx"));
 const DoctorsPage = lazy(() => import("./pages/doctors/DoctorsPage.jsx"));
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
+const ProfileSettingsPage = lazy(() => import("./pages/account/ProfileSettingsPage.jsx"));
 const GamesPage = lazy(() => import("./pages/wellness/GamesPage.jsx"));
 const GamePlayPage = lazy(() => import("./pages/wellness/GamePlayPage.jsx"));
 const MovementPage = lazy(() => import("./pages/wellness/MovementPage.jsx"));
@@ -33,6 +35,8 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
+            <Route path="/profile/edit" element={<ProfileSettingsPage mode="edit" />} />
+            <Route path="/profile/password" element={<ProfileSettingsPage mode="password" />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/connections" element={<ConnectionsPage />} />
             <Route path="/connections/:friendId/chat" element={<ConnectionChatPage />} />
@@ -49,6 +53,10 @@ export default function App() {
             </Route>
             <Route element={<ProtectedRoute roles={["admin"]} />}>
               <Route path="/admin" element={<HomePage />} />
+              <Route path="/admin/patients" element={<AdminManagementPage section="patients" />} />
+              <Route path="/admin/doctors" element={<AdminManagementPage section="doctors" />} />
+              <Route path="/admin/approvals" element={<AdminManagementPage section="approvals" />} />
+              <Route path="/admin/reports" element={<AdminManagementPage section="reports" />} />
               <Route path="/admin/appointments" element={<AdminAppointmentsPage />} />
             </Route>
             <Route element={<ProtectedRoute roles={["doctor"]} />}>

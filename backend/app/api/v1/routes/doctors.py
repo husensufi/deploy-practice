@@ -25,6 +25,7 @@ def list_doctors(
             User.role == "doctor",
             User.is_active.is_(True),
             User.approval_status == "approved",
+            User.is_removed.is_(False),
         )
         .order_by(User.full_name)
         .all()
@@ -39,6 +40,7 @@ def list_doctors(
             city=profile.city,
             address=profile.address,
             phone=profile.phone,
+            years_experience=profile.years_experience,
             consultation_hours=profile.consultation_hours,
             about=profile.about,
             photo_url=profile.photo_url,
@@ -98,6 +100,7 @@ def get_doctor(
             User.role == "doctor",
             User.is_active.is_(True),
             User.approval_status == "approved",
+            User.is_removed.is_(False),
         )
         .first()
     )
@@ -114,6 +117,7 @@ def get_doctor(
         city=profile.city,
         address=profile.address,
         phone=profile.phone,
+        years_experience=profile.years_experience,
         consultation_hours=profile.consultation_hours,
         about=profile.about,
         photo_url=profile.photo_url,

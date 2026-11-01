@@ -76,6 +76,39 @@ describe("Authentication forms", () => {
     expect(await screen.findByText("Home portal")).toBeTruthy();
   });
 
+  it("toggles password visibility on login and signup", async () => {
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const loginPassword = screen.getByLabelText("Password");
+    expect(loginPassword.type).toBe("password");
+    fireEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(loginPassword.type).toBe("text");
+    fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
+    expect(loginPassword.type).toBe("password");
+
+    cleanup();
+    render(
+      <MemoryRouter initialEntries={["/signup"]}>
+        <Routes>
+          <Route path="/signup" element={<SignupPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const signupPassword = screen.getByLabelText("Password");
+    const confirmPassword = screen.getByLabelText("Confirm password");
+    fireEvent.click(screen.getByRole("button", { name: "Show password" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show confirm password" }));
+    expect(signupPassword.type).toBe("text");
+    expect(confirmPassword.type).toBe("text");
+  });
+
   it("validates password confirmation and submits a patient registration", async () => {
     registerMock.mockResolvedValue(undefined);
     render(

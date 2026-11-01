@@ -72,3 +72,43 @@ class PatientUpdateRequest(BaseModel):
         if not normalized:
             raise ValueError("This field cannot be blank.")
         return normalized
+
+
+class ProfileUpdateRequest(BaseModel):
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    mobile: str | None = Field(default=None, min_length=1, max_length=50)
+
+    @field_validator("full_name", "mobile")
+    @classmethod
+    def trim_optional_values(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("This field cannot be blank.")
+        return normalized
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8, max_length=128)
+    confirm_new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        if not any(char.islower() for char in value):
+            raise ValueError("New password must contain a lowercase letter.")
+        if not any(char.isupper() for char in value):
+            raise ValueError("New password must contain an uppercase letter.")
+        if not any(char.isdigit() for char in value):
+            raise ValueError("New password must contain a number.")
+        return value
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.new_password != self.confirm_new_password:
+            raise ValueError("New passwords do not match.")
+        if self.current_password == self.new_password:
+            raise ValueError("New password must differ from the current password.")
+        return self

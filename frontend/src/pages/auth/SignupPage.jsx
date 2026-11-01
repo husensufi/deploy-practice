@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
@@ -24,6 +25,8 @@ export default function SignupPage() {
   const { register: createAccount, user, status } = useAuth();
   const navigate = useNavigate();
   const [requestError, setRequestError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -73,18 +76,54 @@ export default function SignupPage() {
             <input type="tel" autoComplete="tel" {...register("mobile")} />
             {errors.mobile && <span className="field-error">{errors.mobile.message}</span>}
           </label>
-          <label className="form-field">
-            Password
-            <input type="password" autoComplete="new-password" {...register("password")} />
+          <div className="form-field">
+            <label htmlFor="signup-password">Password</label>
+            <div className="password-input-wrap">
+              <input
+                id="signup-password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                {...register("password")}
+              />
+              <button
+                className="password-visibility-button"
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword
+                  ? <EyeOff size={19} aria-hidden="true" />
+                  : <Eye size={19} aria-hidden="true" />}
+              </button>
+            </div>
             {errors.password && <span className="field-error">{errors.password.message}</span>}
-          </label>
-          <label className="form-field">
-            Confirm password
-            <input type="password" autoComplete="new-password" {...register("confirm_password")} />
+          </div>
+          <div className="form-field">
+            <label htmlFor="signup-confirm-password">Confirm password</label>
+            <div className="password-input-wrap">
+              <input
+                id="signup-confirm-password"
+                type={showConfirmPassword ? "text" : "password"}
+                autoComplete="new-password"
+                {...register("confirm_password")}
+              />
+              <button
+                className="password-visibility-button"
+                type="button"
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                aria-pressed={showConfirmPassword}
+                onClick={() => setShowConfirmPassword((visible) => !visible)}
+              >
+                {showConfirmPassword
+                  ? <EyeOff size={19} aria-hidden="true" />
+                  : <Eye size={19} aria-hidden="true" />}
+              </button>
+            </div>
             {errors.confirm_password && (
               <span className="field-error">{errors.confirm_password.message}</span>
             )}
-          </label>
+          </div>
           <button className="button button-primary" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Creating account..." : "Create account"}
           </button>

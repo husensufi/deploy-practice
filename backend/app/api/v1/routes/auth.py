@@ -1,9 +1,10 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.admin import seed_admin_account
-from app.core.legacy import User, hash_password, verify_password
+from app.core.legacy import User, UserNotification, hash_password, verify_password
 from app.core.security import (
     ACCESS_TOKEN_COOKIE,
     create_access_token,
@@ -13,7 +14,13 @@ from app.core.security import (
 )
 from app.core.config import settings
 from app.database.session import get_db
-from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
+from app.schemas.auth import (
+    ChangePasswordRequest,
+    LoginRequest,
+    ProfileUpdateRequest,
+    RegisterRequest,
+    UserResponse,
+)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -29,7 +36,6 @@ def register(
     db: Session = Depends(get_db),
 ) -> User:
     ensure_auth_configured()
-    seed_admin_account(db)
 
     if body.role != "patient":
         raise HTTPException(
@@ -62,7 +68,7 @@ def register(
         ) from exc
 
     db.refresh(user)
-    set_access_token_cookie(response, create_access_token(user.email))
+    set_access_token_cookie(response, create_access_token(user.email, user.token_version))
     return user
 
 
@@ -73,7 +79,6 @@ def login(
     db: Session = Depends(get_db),
 ) -> User:
     ensure_auth_configured()
-    seed_admin_account(db)
 
     user = db.query(User).filter(User.email == body.email).first()
     if user is None or not verify_password(body.password, user.hashed_password):
@@ -82,7 +87,24 @@ def login(
             detail="Invalid email or password.",
         )
 
-    set_access_token_cookie(response, create_access_token(user.email))
+    if user.role == "doctor" and user.approval_status != "approved":
+        if user.approval_status == "rejected":
+            decision_message = "Your doctor application was rejected."
+            if user.rejection_reason:
+                decision_message = f"{decision_message} Reason: {user.rejection_reason}"
+        else:
+            decision_message = "Your doctor application is pending Admin approval."
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=decision_message,
+        )
+    if not user.is_active or getattr(user, "is_removed", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account is inactive. Contact an administrator.",
+        )
+
+    set_access_token_cookie(response, create_access_token(user.email, user.token_version))
     return user
 
 
@@ -100,3 +122,92 @@ def logout(response: Response) -> None:
 @router.get("/me", response_model=UserResponse)
 def current_user(user: User = Depends(get_current_user)) -> User:
     return user
+
+
+@router.put("/profile", response_model=UserResponse)
+def update_profile(
+    body: ProfileUpdateRequest,
+    response: Response,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(user, field, value)
+    user.token_version = getattr(user, "token_version", 0) + 1
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="That phone number is already in use.",
+        ) from exc
+    db.refresh(user)
+    set_access_token_cookie(response, create_access_token(user.email, user.token_version))
+    return user
+
+
+@router.post("/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    body: ChangePasswordRequest,
+    response: Response,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    if not verify_password(body.current_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+    user.hashed_password = hash_password(body.new_password)
+    user.token_version = getattr(user, "token_version", 0) + 1
+    db.commit()
+    response.delete_cookie(
+        key=ACCESS_TOKEN_COOKIE,
+        httponly=True,
+        secure=settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
+
+
+@router.get("/notifications")
+def list_notifications(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    records = (
+        db.query(UserNotification)
+        .filter(UserNotification.user_id == user.id)
+        .order_by(UserNotification.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    return [
+        {
+            "id": item.id,
+            "category": item.category,
+            "message": item.message,
+            "created_at": item.created_at.isoformat(),
+            "read_at": item.read_at.isoformat() if item.read_at else None,
+        }
+        for item in records
+    ]
+
+
+@router.post("/notifications/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT)
+def mark_notification_read(
+    notification_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    notification = (
+        db.query(UserNotification)
+        .filter(UserNotification.id == notification_id, UserNotification.user_id == user.id)
+        .first()
+    )
+    if notification is None:
+        raise HTTPException(status_code=404, detail="Notification not found.")
+    if notification.read_at is None:
+        notification.read_at = datetime.utcnow()
+        db.commit()

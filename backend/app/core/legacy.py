@@ -4,6 +4,7 @@ from legacy.detection import calculate_bmi, run_pcos_screening
 from legacy.models import User
 from legacy.models_doctor import DoctorProfile
 from legacy.models_appointments import Appointment
+from legacy.models_admin import AdminAuditLog, DoctorApprovalHistory, UserNotification
 from legacy.models_social import ChatMessage, Connection
 from legacy.models_tracker import DailyLog, PCOSProfile
 from legacy.pdf_report import build_pdf_report
@@ -12,10 +13,13 @@ __all__ = [
     "ChatMessage",
     "Connection",
     "Appointment",
+    "AdminAuditLog",
+    "DoctorApprovalHistory",
     "DailyLog",
     "DoctorProfile",
     "PCOSProfile",
     "User",
+    "UserNotification",
     "build_pdf_report",
     "calculate_bmi",
     "generate_all_charts",

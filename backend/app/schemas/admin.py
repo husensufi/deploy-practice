@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -8,7 +10,7 @@ class CreateDoctorAccountRequest(BaseModel):
     email: str = Field(min_length=3, max_length=320)
     mobile: str = Field(min_length=1, max_length=50)
     password: str = Field(min_length=8)
-    approval_status: str = Field(default="pending")
+    approval_status: Literal["pending", "approved", "rejected"] = "pending"
     notes: str | None = None
 
 
@@ -16,6 +18,11 @@ class DoctorApprovalDecision(BaseModel):
     decision: str = Field(pattern="^(approved|rejected|pending|inactive)$")
     reason: str | None = None
     notes: str | None = None
+
+
+class AccountStatusRequest(BaseModel):
+    status: str = Field(pattern="^(active|inactive|removed)$")
+    reason: str | None = Field(default=None, max_length=1000)
 
 
 class AdminDashboardSummary(BaseModel):

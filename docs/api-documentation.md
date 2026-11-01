@@ -68,10 +68,14 @@ The independent backend uses Pydantic request/response schemas. Protected endpoi
 | Method | Path | Access and behavior |
 |---|---|---|
 | GET | `/api/v1/health` | Public liveness response |
-| POST | `/api/v1/auth/register` | Register patient/doctor; hash password; set cookie |
-| POST | `/api/v1/auth/login` | Verify credentials; set cookie |
+| POST | `/api/v1/auth/register` | Public patient registration; hash password; set cookie |
+| POST | `/api/v1/auth/login` | Verify credentials; reject inactive, removed, and unapproved accounts; set versioned cookie |
 | POST | `/api/v1/auth/logout` | Clear cookie |
 | GET | `/api/v1/auth/me` | Current authenticated account |
+| PUT | `/api/v1/auth/profile` | Update the signed-in user's name and phone number; invalidates older sessions and refreshes the current cookie |
+| POST | `/api/v1/auth/password` | Verify current password, hash the new password, revoke existing sessions, and clear the current cookie |
+| GET | `/api/v1/auth/notifications` | List notifications for the signed-in user |
+| POST | `/api/v1/auth/notifications/{notification_id}/read` | Mark one owned notification as read |
 | GET / PUT | `/api/v1/patients/me` | Patient-only current account read/update |
 | GET | `/api/v1/patients/dashboard` | Patient-only profile, current screening result, today's log, recent logs |
 | POST | `/api/v1/assessments` | Patient-only create/update the existing single `PCOSProfile`; return current result |
@@ -95,8 +99,18 @@ The independent backend uses Pydantic request/response schemas. Protected endpoi
 | GET | `/api/v1/wellness/tutorials` | Patient-only legacy yoga and breathing tutorial catalog, including instructions and video-search links |
 | GET | `/api/v1/wellness/tutorials/{tutorial_id}` | Patient-only detail for one yoga or breathing tutorial; unknown IDs return 404 |
 | GET | `/api/v1/wellness/games` | Patient-only catalog for the four legacy wellness games |
+| GET | `/api/v1/admin/patients` | Admin-only patient list; supports `search`, `limit` (`10`, `50`, `100`, `all`) and `offset` |
+| GET | `/api/v1/admin/patients/{patient_id}` | Admin-only patient details and appointment history |
+| POST | `/api/v1/admin/patients/{patient_id}/status` | Admin-only `active`, `inactive`, or soft `removed` account status |
+| GET | `/api/v1/admin/doctors` | Admin-only doctor list; supports approval status, name/email search, application date range, record limit, and offset |
+| GET | `/api/v1/admin/doctors/approval-summary` | Admin-only counts for pending, approved, and rejected applications |
+| GET | `/api/v1/admin/doctors/approval-report.pdf` | Admin-only PDF export using the same status, search, date, and record-limit filters |
+| GET | `/api/v1/admin/doctors/{doctor_id}` | Admin-only doctor profile and approval decision history |
+| POST | `/api/v1/admin/doctors/{doctor_id}/decision` | Admin-only approval decision; records decision time/history and notifies the doctor |
+| POST | `/api/v1/admin/doctors/{doctor_id}/status` | Admin-only activate, deactivate, or soft-remove; deactivation invalidates sessions and notifies patients with active bookings |
+| GET | `/api/v1/admin/audit-log` | Admin-only recent management actions and approval export history |
 
-The API reuses the original ORM models and screening/PDF modules through a narrow legacy adapter; it does not call `create_all()` and has not changed the SQLite schema. The original root routes are still in place.
+The API reuses the original ORM models and screening/PDF modules through a narrow legacy adapter. Startup applies only additive, backward-compatible SQLite columns and creates approval-history, notification, and audit tables; it preserves existing users, appointments, and health records. Account deactivation and removal are soft state changes, and JWT token versions reject previously issued sessions.
 
 | POST | `/api/v1/chat/reply` | Authenticated; sends up to 20 recent user/assistant messages to the configured Azure OpenAI deployment and returns a generated reply |
 

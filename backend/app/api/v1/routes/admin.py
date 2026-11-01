@@ -1,18 +1,105 @@
-from datetime import datetime
+from datetime import date, datetime
+from io import BytesIO
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, aliased
 
-from app.core.legacy import Appointment, User, hash_password
+from app.core.legacy import (
+    AdminAuditLog,
+    Appointment,
+    DoctorApprovalHistory,
+    DoctorProfile,
+    User,
+    UserNotification,
+    hash_password,
+)
 from app.core.security import require_admin
 from app.database.session import get_db
 from app.schemas.admin import (
+    AccountStatusRequest,
     AdminDashboardSummary,
     CreateDoctorAccountRequest,
     DoctorApprovalDecision,
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+def _record(user: User, db: Session) -> dict:
+    appointment_count = db.query(Appointment).filter(
+        or_(Appointment.patient_id == user.id, Appointment.doctor_id == user.id)
+    ).count()
+    profile = (
+        db.query(DoctorProfile).filter(DoctorProfile.user_id == user.id).first()
+        if user.role == "doctor"
+        else None
+    )
+    return {
+        "id": user.id,
+        "full_name": user.full_name,
+        "email": user.email,
+        "mobile": user.mobile,
+        "role": user.role,
+        "is_active": bool(user.is_active),
+        "is_removed": bool(getattr(user, "is_removed", False)),
+        "approval_status": getattr(user, "approval_status", "approved"),
+        "approval_decided_at": getattr(user, "approval_decided_at", None).isoformat()
+        if getattr(user, "approval_decided_at", None)
+        else None,
+        "rejection_reason": getattr(user, "rejection_reason", None),
+        "admin_notes": getattr(user, "admin_notes", None),
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "appointment_count": appointment_count,
+        "specialization": profile.specialization if profile else None,
+    }
+
+
+def _audit(
+    db: Session, admin_id: int, action: str, target_id: int | None, details: str | None
+) -> None:
+    db.add(
+        AdminAuditLog(
+            admin_id=admin_id,
+            target_user_id=target_id,
+            action=action,
+            details=details,
+        )
+    )
+
+
+def _doctor_query(
+    db: Session,
+    approval_status: str | None,
+    search: str | None,
+    date_from: date | None,
+    date_to: date | None,
+    include_removed: bool = True,
+):
+    query = db.query(User).filter(User.role == "doctor")
+    if not include_removed:
+        query = query.filter(User.is_removed.is_(False))
+    if approval_status and approval_status != "all":
+        query = query.filter(User.approval_status == approval_status)
+    if search:
+        term = f"%{search.strip()}%"
+        query = query.filter(or_(User.full_name.ilike(term), User.email.ilike(term)))
+    if date_from:
+        query = query.filter(func.date(User.created_at) >= date_from.isoformat())
+    if date_to:
+        query = query.filter(func.date(User.created_at) <= date_to.isoformat())
+    return query.order_by(User.created_at.desc(), User.id.desc())
+
+
+def _limit_query(query, limit: str, offset: int = 0):
+    if limit != "all":
+        query = query.limit(int(limit)).offset(offset)
+    return query
 
 
 @router.get("/dashboard", response_model=AdminDashboardSummary)
@@ -96,10 +183,28 @@ def create_doctor_account(
         is_active=(body.approval_status == "approved"),
         approval_status=body.approval_status,
         admin_notes=body.notes,
+        approval_decided_at=datetime.utcnow() if body.approval_status != "pending" else None,
     )
     db.add(doctor)
     db.commit()
     db.refresh(doctor)
+    if body.approval_status != "pending":
+        db.add(
+            DoctorApprovalHistory(
+                doctor_id=doctor.id,
+                admin_id=_user.id,
+                decision=body.approval_status,
+                reason=body.notes,
+            )
+        )
+    _audit(
+        db,
+        _user.id,
+        "doctor_created",
+        doctor.id,
+        f"approval_status={body.approval_status}",
+    )
+    db.commit()
     return {
         "id": doctor.id,
         "full_name": doctor.full_name,
@@ -113,19 +218,151 @@ def create_doctor_account(
 def list_patients(
     _user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    search: str | None = Query(default=None, max_length=255),
+    limit: str = Query(default="all", pattern="^(10|50|100|all)$"),
+    offset: int = Query(default=0, ge=0),
 ):
-    rows = db.query(User).filter(User.role == "patient").order_by(User.created_at.desc()).all()
+    query = db.query(User).filter(User.role == "patient")
+    if search:
+        term = f"%{search.strip()}%"
+        query = query.filter(or_(User.full_name.ilike(term), User.email.ilike(term)))
+    rows = _limit_query(query.order_by(User.created_at.desc()), limit, offset).all()
+    return [_record(user, db) for user in rows]
+
+
+@router.get("/patients/{patient_id}")
+def get_patient_details(
+    patient_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    patient = db.query(User).filter(User.id == patient_id, User.role == "patient").first()
+    if patient is None:
+        raise HTTPException(status_code=404, detail="Patient not found.")
+    _audit(db, admin.id, "view_patient_details", patient.id, None)
+    db.commit()
+    appointments = (
+        db.query(Appointment)
+        .filter(Appointment.patient_id == patient.id)
+        .order_by(Appointment.appointment_date.desc(), Appointment.created_at.desc())
+        .all()
+    )
+    return {
+        **_record(patient, db),
+        "appointments": [
+            {
+                "id": item.id,
+                "doctor_id": item.doctor_id,
+                "appointment_date": item.appointment_date.isoformat(),
+                "preferred_time": item.preferred_time,
+                "status": item.status,
+            }
+            for item in appointments
+        ],
+    }
+
+
+def _update_account_status(
+    account_id: int,
+    role: str,
+    payload: AccountStatusRequest,
+    admin: User,
+    db: Session,
+) -> dict:
+    account = db.query(User).filter(User.id == account_id, User.role == role).first()
+    if account is None:
+        raise HTTPException(status_code=404, detail=f"{role.title()} not found.")
+    if getattr(account, "is_removed", False):
+        raise HTTPException(status_code=409, detail="Removed accounts cannot be changed.")
+    if payload.status == "active" and role == "doctor" and account.approval_status != "approved":
+        raise HTTPException(
+            status_code=409,
+            detail="Only approved doctors can be reactivated.",
+        )
+    if payload.status != "removed" and account.is_active == (payload.status == "active"):
+        return _record(account, db)
+
+    now = datetime.utcnow()
+    if payload.status == "active":
+        account.is_active = True
+    elif payload.status == "inactive":
+        account.is_active = False
+    else:
+        account.is_active = False
+        account.is_removed = True
+        account.removed_at = now
+    account.token_version = getattr(account, "token_version", 0) + 1
+
+    if role == "doctor" and payload.status == "inactive":
+        active_appointments = (
+            db.query(Appointment)
+            .filter(
+                Appointment.doctor_id == account.id,
+                Appointment.status.in_(("pending", "accepted", "rescheduled")),
+            )
+            .all()
+        )
+        for appointment in active_appointments:
+            db.add(
+                UserNotification(
+                    user_id=appointment.patient_id,
+                    category="doctor_inactive",
+                    message=(
+                        f"Dr. {account.full_name} is currently inactive. "
+                        f"Please contact Admin about appointment {appointment.id}."
+                    ),
+                )
+            )
+
+    _audit(
+        db,
+        admin.id,
+        f"{role}_{payload.status}",
+        account.id,
+        payload.reason,
+    )
+    db.commit()
+    db.refresh(account)
+    return _record(account, db)
+
+
+@router.post("/doctors/{doctor_id}/status")
+def set_doctor_status(
+    doctor_id: int,
+    payload: AccountStatusRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    return _update_account_status(doctor_id, "doctor", payload, admin, db)
+
+
+@router.post("/patients/{patient_id}/status")
+def set_patient_status(
+    patient_id: int,
+    payload: AccountStatusRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    return _update_account_status(patient_id, "patient", payload, admin, db)
+
+
+@router.get("/audit-log")
+def list_admin_audit_log(
+    _user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    limit: int = Query(default=100, ge=1, le=500),
+) -> list[dict]:
+    records = db.query(AdminAuditLog).order_by(AdminAuditLog.created_at.desc()).limit(limit).all()
     return [
         {
-            "id": user.id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "mobile": user.mobile,
-            "role": user.role,
-            "is_active": bool(getattr(user, "is_active", True)),
-            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "id": item.id,
+            "admin_id": item.admin_id,
+            "target_user_id": item.target_user_id,
+            "action": item.action,
+            "details": item.details,
+            "created_at": item.created_at.isoformat(),
         }
-        for user in rows
+        for item in records
     ]
 
 
@@ -133,23 +370,110 @@ def list_patients(
 def list_doctors(
     _user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    approval_status: str | None = Query(default=None, pattern="^(all|pending|approved|rejected)$"),
+    search: str | None = Query(default=None, max_length=255),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: str = Query(default="all", pattern="^(10|50|100|all)$"),
+    offset: int = Query(default=0, ge=0),
+    include_removed: bool = True,
 ):
-    rows = db.query(User).filter(User.role == "doctor").order_by(User.created_at.desc()).all()
-    return [
-        {
-            "id": user.id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "mobile": user.mobile,
-            "role": user.role,
-            "is_active": bool(getattr(user, "is_active", True)),
-            "approval_status": getattr(user, "approval_status", "approved"),
-            "rejection_reason": getattr(user, "rejection_reason", None),
-            "admin_notes": getattr(user, "admin_notes", None),
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-        }
-        for user in rows
-    ]
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=422, detail="date_from must not be after date_to.")
+    query = _doctor_query(
+        db, approval_status, search, date_from, date_to, include_removed
+    )
+    return [_record(user, db) for user in _limit_query(query, limit, offset).all()]
+
+
+@router.get("/doctors/approval-summary")
+def approval_summary(
+    _user: User = Depends(require_admin), db: Session = Depends(get_db)
+) -> dict[str, int]:
+    return {
+        name: db.query(User).filter(
+            User.role == "doctor",
+            User.approval_status == name,
+            User.is_removed.is_(False),
+        ).count()
+        for name in ("pending", "approved", "rejected")
+    }
+
+
+@router.get("/doctors/approval-report.pdf")
+def export_doctor_approval_report(
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    approval_status: str = Query(default="all", pattern="^(all|pending|approved|rejected)$"),
+    search: str | None = Query(default=None, max_length=255),
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: str = Query(default="all", pattern="^(10|50|100|all)$"),
+    include_removed: bool = Query(default=False),
+):
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=422, detail="date_from must not be after date_to.")
+    rows = _limit_query(
+        _doctor_query(db, approval_status, search, date_from, date_to, include_removed), limit
+    ).all()
+    _audit(
+        db,
+        admin.id,
+        "doctor_approval_report_export",
+        None,
+        f"status={approval_status}; limit={limit}; count={len(rows)}",
+    )
+    db.commit()
+    buffer = BytesIO()
+    document = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=28, leftMargin=28)
+    styles = getSampleStyleSheet()
+    filters = (
+        f"Status: {approval_status.title()} | Search: {search or 'None'} | "
+        f"Date: {date_from or 'Any'} to {date_to or 'Any'} | Limit: {limit.title()}"
+    )
+    data = [[
+        "Application ID", "Doctor Name", "Email", "Phone", "Specialization",
+        "Application Date", "Status", "Decision Date",
+    ]]
+    for doctor in rows:
+        profile = db.query(DoctorProfile).filter(DoctorProfile.user_id == doctor.id).first()
+        data.append([
+            str(doctor.id), doctor.full_name, doctor.email, doctor.mobile or "—",
+            profile.specialization if profile else "—",
+            doctor.created_at.strftime("%Y-%m-%d") if doctor.created_at else "—",
+            doctor.approval_status or "approved",
+            doctor.approval_decided_at.strftime("%Y-%m-%d") if doctor.approval_decided_at else "—",
+        ])
+    table = Table(data, repeatRows=1, colWidths=[60, 105, 150, 75, 100, 85, 65, 85])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#6b244a")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#d8c8d0")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#fbf5f8")]),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    document.build([
+        Paragraph("PCOS GynoCare – Doctor Approval Report", styles["Title"]),
+        Spacer(1, 8),
+        Paragraph(filters, styles["BodyText"]),
+        Paragraph(
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')} | "
+            f"Exported records: {len(rows)}",
+            styles["BodyText"],
+        ),
+        Spacer(1, 12),
+        table,
+    ])
+    buffer.seek(0)
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="doctor-approval-report.pdf"'},
+    )
 
 
 @router.post("/doctors/{doctor_id}/decision")
@@ -163,13 +487,40 @@ def set_doctor_decision(
     if doctor is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found.")
 
+    if getattr(doctor, "is_removed", False):
+        raise HTTPException(status_code=409, detail="Removed doctor accounts cannot be approved.")
+
     doctor.approval_status = payload.decision
+    doctor.approval_decided_at = datetime.utcnow()
     doctor.rejection_reason = payload.reason if payload.decision == "rejected" else None
     doctor.admin_notes = payload.notes if payload.notes else doctor.admin_notes
     if payload.decision == "approved":
         doctor.is_active = True
-    elif payload.decision == "inactive":
+    elif payload.decision in {"inactive", "rejected", "pending"}:
         doctor.is_active = False
+    doctor.token_version = getattr(doctor, "token_version", 0) + 1
+    db.add(
+        DoctorApprovalHistory(
+            doctor_id=doctor.id,
+            admin_id=_user.id,
+            decision=payload.decision,
+            reason=payload.reason or payload.notes,
+        )
+    )
+    db.add(
+        UserNotification(
+            user_id=doctor.id,
+            category="doctor_approval",
+            message=f"Your doctor application was {payload.decision}.",
+        )
+    )
+    _audit(
+        db,
+        _user.id,
+        "doctor_approval_decision",
+        doctor.id,
+        f"decision={payload.decision}; reason={payload.reason or ''}",
+    )
     db.commit()
     db.refresh(doctor)
     return {
@@ -179,4 +530,43 @@ def set_doctor_decision(
         "rejection_reason": doctor.rejection_reason,
         "admin_notes": doctor.admin_notes,
         "is_active": bool(getattr(doctor, "is_active", True)),
+    }
+
+
+@router.get("/doctors/{doctor_id}")
+def get_doctor_details(
+    doctor_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    doctor = db.query(User).filter(User.id == doctor_id, User.role == "doctor").first()
+    if doctor is None:
+        raise HTTPException(status_code=404, detail="Doctor not found.")
+    _audit(db, admin.id, "view_doctor_details", doctor.id, None)
+    db.commit()
+    profile = db.query(DoctorProfile).filter(DoctorProfile.user_id == doctor.id).first()
+    history = (
+        db.query(DoctorApprovalHistory)
+        .filter(DoctorApprovalHistory.doctor_id == doctor.id)
+        .order_by(DoctorApprovalHistory.created_at.desc())
+        .all()
+    )
+    return {
+        **_record(doctor, db),
+        "doctor_profile": {
+            "specialization": profile.specialization,
+            "clinic_name": profile.clinic_name,
+            "city": profile.city,
+            "address": profile.address,
+            "phone": profile.phone,
+            "years_experience": profile.years_experience,
+        } if profile else None,
+        "approval_history": [
+            {
+                "decision": item.decision,
+                "reason": item.reason,
+                "created_at": item.created_at.isoformat(),
+            }
+            for item in history
+        ],
     }

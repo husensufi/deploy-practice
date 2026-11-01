@@ -38,6 +38,9 @@ export default function AppointmentDetailsDialog({ appointment, viewer, onClose 
             </>
           )}
           <div><dt>Reason</dt><dd>{appointment.reason}</dd></div>
+          {appointment.additional_notes && (
+            <div><dt>Additional notes</dt><dd>{appointment.additional_notes}</dd></div>
+          )}
           {appointment.doctor_note && <div><dt>Doctor's note</dt><dd>{appointment.doctor_note}</dd></div>}
           {appointment.admin_note && <div><dt>Admin note</dt><dd>{appointment.admin_note}</dd></div>}
           {appointment.reschedule_date && (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 
 import { ErrorState, LoadingState } from "../../components/common/QueryState.jsx";
 import { apiRequest } from "../../services/api.js";
@@ -16,13 +17,14 @@ const statisticLabels = [
 
 export default function AdminAppointmentsPage() {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({
-    doctor_id: "",
-    patient_id: "",
-    status: "",
-    date_from: "",
-    date_to: "",
-  });
+  const [searchParams] = useSearchParams();
+  const [filters, setFilters] = useState(() => ({
+    doctor_id: searchParams.get("doctor_id") || "",
+    patient_id: searchParams.get("patient_id") || "",
+    status: searchParams.get("status") || "",
+    date_from: searchParams.get("date_from") || "",
+    date_to: searchParams.get("date_to") || "",
+  }));
   const [notes, setNotes] = useState({});
   const [reassignmentDoctors, setReassignmentDoctors] = useState({});
   const [success, setSuccess] = useState("");

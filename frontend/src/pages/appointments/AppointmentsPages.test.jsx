@@ -90,12 +90,16 @@ describe("appointment workflow pages", () => {
     renderPage(<DoctorsPage />);
 
     fireEvent.click(await screen.findByRole("button", { name: "Request appointment" }));
-    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2027-01-12" } });
-    fireEvent.change(screen.getByLabelText("Preferred time"), { target: { value: "10:30" } });
-    fireEvent.change(screen.getByLabelText("Reason for consultation"), {
-      target: { value: "Discuss cycle changes" },
+    expect(await screen.findByRole("heading", { name: "Request Appointment" })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Appointment Date/), { target: { value: "2027-01-12" } });
+    fireEvent.change(screen.getByLabelText(/Preferred Time/), { target: { value: "10:30" } });
+    fireEvent.change(screen.getByLabelText(/Reason for Consultation/), {
+      target: { value: "PCOS symptoms and management" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send request" }));
+    fireEvent.change(screen.getByLabelText(/Additional Notes for Doctor/), {
+      target: { value: "Cycles have been irregular for three months." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send Appointment Request" }));
 
     await waitFor(() => {
       expect(apiRequestMock).toHaveBeenCalledWith("/appointments", {
@@ -104,11 +108,67 @@ describe("appointment workflow pages", () => {
           doctor_id: 21,
           appointment_date: "2027-01-12",
           preferred_time: "10:30",
-          reason: "Discuss cycle changes",
+          reason: "PCOS symptoms and management",
+          additional_notes: "Cycles have been irregular for three months.",
         },
       });
     });
     expect((await screen.findByRole("status")).textContent).toContain("Appointment request sent.");
+    expect(screen.getByRole("button", { name: "Request Sent" }).disabled).toBe(true);
+  }, 10000);
+
+  it("returns to the doctor directory when booking is cancelled", async () => {
+    apiRequestMock.mockImplementation((path) => {
+      if (path === "/doctors") return Promise.resolve([doctor]);
+      throw new Error(`Unexpected API request: ${path}`);
+    });
+    renderPage(<DoctorsPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Request appointment" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(await screen.findByRole("heading", { name: "Gynecologists" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Request Appointment" })).toBeNull();
+  });
+
+  it("validates an Other consultation reason and then submits the specified reason", async () => {
+    apiRequestMock.mockImplementation((path) => {
+      if (path === "/doctors") return Promise.resolve([doctor]);
+      if (path === "/appointments") return Promise.resolve(apiAppointment());
+      throw new Error(`Unexpected API request: ${path}`);
+    });
+    renderPage(<DoctorsPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Request appointment" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Appointment Request" }));
+
+    expect(await screen.findByText("Select an appointment date.")).toBeTruthy();
+    expect(screen.getByText("Select a preferred time.")).toBeTruthy();
+    expect(screen.getByText("Select a consultation reason.")).toBeTruthy();
+    expect(apiRequestMock).not.toHaveBeenCalledWith("/appointments", expect.anything());
+
+    fireEvent.change(screen.getByLabelText(/Appointment Date/), { target: { value: "2027-01-12" } });
+    fireEvent.change(screen.getByLabelText(/Preferred Time/), { target: { value: "10:00" } });
+    fireEvent.change(screen.getByLabelText(/Reason for Consultation/), {
+      target: { value: "Other (Please specify)" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send Appointment Request" }));
+    expect(await screen.findByText("Please specify your reason (at least 3 characters).")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText(/Please specify your reason/), {
+      target: { value: "I have a question about a recent scan." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send Appointment Request" }));
+    await waitFor(() => {
+      expect(apiRequestMock).toHaveBeenCalledWith("/appointments", {
+        method: "POST",
+        data: {
+          doctor_id: 21,
+          appointment_date: "2027-01-12",
+          preferred_time: "10:00",
+          reason: "Other (Please specify): I have a question about a recent scan.",
+          additional_notes: null,
+        },
+      });
+    });
   });
 
   it("shows doctor's notes and lets a patient cancel a pending request", async () => {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const { login, user, status } = useAuth();
   const navigate = useNavigate();
   const [requestError, setRequestError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -50,11 +52,29 @@ export default function LoginPage() {
             <input type="email" autoComplete="email" {...register("email")} />
             {errors.email && <span className="field-error">{errors.email.message}</span>}
           </label>
-          <label className="form-field">
-            Password
-            <input type="password" autoComplete="current-password" {...register("password")} />
+          <div className="form-field">
+            <label htmlFor="login-password">Password</label>
+            <div className="password-input-wrap">
+              <input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                {...register("password")}
+              />
+              <button
+                className="password-visibility-button"
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword
+                  ? <EyeOff size={19} aria-hidden="true" />
+                  : <Eye size={19} aria-hidden="true" />}
+              </button>
+            </div>
             {errors.password && <span className="field-error">{errors.password.message}</span>}
-          </label>
+          </div>
           <button className="button button-primary" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>

@@ -63,8 +63,17 @@ export function AuthProvider({ children }) {
     setStatus("unauthenticated");
   }
 
+  function updateUser(account) {
+    setUser(account);
+  }
+
+  function endSession() {
+    setUser(null);
+    setStatus("unauthenticated");
+  }
+
   const value = useMemo(
-    () => ({ user, status, error, login, register, logout }),
+    () => ({ user, status, error, login, register, logout, updateUser, endSession }),
     [user, status, error],
   );
 

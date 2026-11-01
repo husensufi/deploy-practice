@@ -22,6 +22,7 @@ class DoctorProfile(Base):
     city = Column(String, nullable=False)
     address = Column(String, nullable=False)
     phone = Column(String, nullable=False)
+    years_experience = Column(Integer, nullable=True)
     consultation_hours = Column(String, default="Mon–Sat, 10 AM – 6 PM")
     about = Column(Text, nullable=True)
     photo_url = Column(String, nullable=True)  # optional; a placeholder is shown if empty

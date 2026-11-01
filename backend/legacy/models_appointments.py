@@ -24,6 +24,7 @@ class Appointment(Base):
     appointment_date = Column(Date, nullable=False, index=True)
     preferred_time = Column(String(5), nullable=False)
     reason = Column(Text, nullable=False)
+    additional_notes = Column(String(500), nullable=True)
     status = Column(String(20), nullable=False, default="pending", index=True)
     doctor_note = Column(Text, nullable=True)
     admin_note = Column(Text, nullable=True)

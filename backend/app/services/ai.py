@@ -10,7 +10,9 @@ PROMPT_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
 
 def load_prompt(template_name: str) -> str:
-    prompt_path = PROMPT_DIR / f"{template_name}.txt"
+    if not template_name or Path(template_name).name != template_name:
+        raise ValueError("Prompt name must be a plain template name.")
+    prompt_path = PROMPT_DIR / f"{template_name}.md"
     if not prompt_path.exists():
         raise FileNotFoundError(f"Prompt template not found: {template_name}")
     return prompt_path.read_text(encoding="utf-8").strip()

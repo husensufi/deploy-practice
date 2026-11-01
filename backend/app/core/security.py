@@ -23,13 +23,14 @@ def ensure_auth_configured() -> None:
         )
 
 
-def create_access_token(email: str) -> str:
+def create_access_token(email: str, token_version: int = 0) -> str:
     ensure_auth_configured()
 
     now = datetime.now(timezone.utc)
     return jwt.encode(
         {
             "sub": email,
+            "ver": token_version,
             "iat": now,
             "exp": now + ACCESS_TOKEN_LIFETIME,
         },
@@ -74,7 +75,12 @@ def get_current_user(
         )
 
     user = db.query(User).filter(User.email == email).first()
-    if user is None:
+    if (
+        user is None
+        or not getattr(user, "is_active", True)
+        or getattr(user, "is_removed", False)
+        or payload.get("ver") != getattr(user, "token_version", 0)
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required.",

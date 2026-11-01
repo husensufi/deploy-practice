@@ -254,6 +254,9 @@ export default function PatientAppointmentsPage() {
                   <span className={`appointment-status appointment-status--${appointment.status}`}>{appointment.status}</span>
                 </div>
                 <p><strong>Reason:</strong> {appointment.reason}</p>
+                {appointment.additional_notes && (
+                  <p><strong>Additional notes:</strong> {appointment.additional_notes}</p>
+                )}
                 {appointment.doctor_note && <p><strong>Doctor's note:</strong> {appointment.doctor_note}</p>}
                 {appointment.admin_note && <p><strong>Admin note:</strong> {appointment.admin_note}</p>}
                 {appointment.reschedule_date && (

@@ -48,6 +48,7 @@ def _serialize_appointment(row) -> AppointmentResponse:
         appointment_date=appointment.appointment_date,
         preferred_time=appointment.preferred_time,
         reason=appointment.reason,
+        additional_notes=appointment.additional_notes,
         status=appointment.status,
         doctor_note=appointment.doctor_note,
         admin_note=appointment.admin_note,
@@ -143,6 +144,7 @@ def request_appointment(
         appointment_date=body.appointment_date,
         preferred_time=body.preferred_time,
         reason=body.reason,
+        additional_notes=body.additional_notes,
         status="pending",
     )
     db.add(appointment)

@@ -97,21 +97,21 @@ Edit `backend\.env` before running the API:
 - **Use the existing project database.** The default database path is resolved from the repository location, independent of the current directory. Leave `DATABASE_URL` unset to use that default. If you set it, point it to the existing `pcos_gynocare.db` file with an absolute SQLite URL; do not use `:memory:` or a new database path unless intentionally testing against a separate database.
 - `ENVIRONMENT=development` is suitable for local development.
 - `FRONTEND_URL=http://localhost:5173` must match the browser's frontend origin. If Vite uses another port or hostname, update this setting and restart the API.
-- Set `ADMIN_EMAIL=admin@ey.com` and `ADMIN_PASSWORD=<strong initial password>`. The backend seeds a single admin account automatically on startup if it does not already exist; it never overwrites an existing admin password and never prints the credentials in logs.
+- Set `ADMIN_EMAIL=admin@ey.com` and `ADMIN_PASSWORD=<strong password>`. On API startup, the backend creates this configured Admin account if absent; if the email already exists, it ensures that account is active with the Admin role and synchronizes its password hash to the configured password. No credentials are printed in logs.
 - Both GynoBuddy chat interfaces use one backend-only Azure OpenAI service and deployment. Configure `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, and optionally `AZURE_OPENAI_API_VERSION` in `backend/.env` or the project root `.env`. Process environment settings take precedence, then `backend/.env`, then missing values fall back to the root `.env`. The API version defaults to `2024-10-21`. Without the required settings, chat returns a clear configuration error rather than a canned response.
 
 Keep all real credentials in `backend\.env`. Never paste secrets into source files, README content, screenshots, issue reports, or commits. The `.env` files are ignored by Git.
 
 ### Admin seed and login
 
-Set the initial administrator credentials in `backend/.env` before starting the API:
+Set the administrator credentials in `backend/.env` before starting the API:
 
 ```powershell
 ADMIN_EMAIL=admin@ey.com
 ADMIN_PASSWORD=YourStrongInitialPassword123!
 ```
 
-The backend creates the admin account only when it is absent. Existing admin accounts keep their current password. Log in from the normal login form with the configured admin email and password, or call `/api/v1/auth/login` with those credentials to access the admin dashboard.
+The backend creates the configured Admin account if it is absent. On startup, an existing account with the configured email is activated, assigned the Admin role, and synchronized with the configured password. Restart the API after changing these values. Log in from the normal login form with the configured email and password, or call `/api/v1/auth/login` with those credentials to access the admin dashboard.
 
 Start the API from the repository root:
 
@@ -171,7 +171,7 @@ uvicorn legacy.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
 
 Then open <http://localhost:8000>. The legacy app and new API both default to port `8000`; stop one before starting the other, or configure a different port.
 
-The legacy and React GynoBuddy interfaces share the backend Azure OpenAI service. Configure the provider once in `backend\.env` or the project root `.env`; a populated `backend\.env` value takes precedence, while missing or blank settings fall back to the root file. Keep credentials server-side; never add them to frontend environment files or expose them through API responses.
+The legacy and React GynoBuddy interfaces share the backend Azure OpenAI service and the same Markdown system prompt. The application prompt files are in `backend/app/prompts/` and use consistent role, objective, input-trust, safety/privacy, and output-format sections. They are loaded as system instructions by `backend/app/services/ai.py`; the legacy chatbot uses the same loader. Configure the provider once in `backend\.env` or the project root `.env`; a populated `backend\.env` value takes precedence, while missing or blank settings fall back to the root file. Keep credentials server-side; never add them to frontend environment files or expose them through API responses.
 
 ## Run with Docker Compose
 

@@ -9,6 +9,7 @@ class DoctorProfileSubmitRequest(BaseModel):
     city: str = Field(min_length=1, max_length=255)
     address: str = Field(min_length=1, max_length=1000)
     phone: str = Field(min_length=1, max_length=50)
+    years_experience: int | None = Field(default=None, ge=0, le=80)
     consultation_hours: str = Field(
         default="Mon–Sat, 10 AM – 6 PM", max_length=255
     )
@@ -25,6 +26,7 @@ class DoctorDirectoryEntry(BaseModel):
     city: str
     address: str
     phone: str
+    years_experience: int | None = None
     consultation_hours: str
     about: str | None
     photo_url: str | None
@@ -40,6 +42,7 @@ class DoctorProfileResponse(BaseModel):
     city: str
     address: str
     phone: str
+    years_experience: int | None = None
     consultation_hours: str
     about: str | None
     photo_url: str | None

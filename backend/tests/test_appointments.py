@@ -3,10 +3,11 @@ from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.admin import ensure_appointment_schema, ensure_doctor_profile_schema
 from app.core import security
 from app.core.config import settings
 from app.database.session import get_db
@@ -82,7 +83,7 @@ def add_doctor_profile(session_factory, user_id: int) -> None:
 def sign_in(client: TestClient, user: User) -> None:
     client.cookies.set(
         security.ACCESS_TOKEN_COOKIE,
-        security.create_access_token(user.email),
+        security.create_access_token(user.email, getattr(user, "token_version", 0)),
     )
 
 
@@ -115,6 +116,7 @@ def test_approved_doctor_booking_decision_completion_and_admin_monitoring(appoin
     )
     assert approved.status_code == 200
     assert approved.json()["approval_status"] == "approved"
+    doctor.token_version += 1
 
     sign_in(client, patient)
     directory = client.get("/api/v1/doctors")
@@ -123,11 +125,14 @@ def test_approved_doctor_booking_decision_completion_and_admin_monitoring(appoin
     assert directory.json()[0]["user_id"] == doctor.id
 
     payload = booking_payload(doctor.id)
+    payload["additional_notes"] = "Cycles have been irregular recently."
     request = client.post("/api/v1/appointments", json=payload)
     assert request.status_code == 201
     appointment_id = request.json()["id"]
     assert request.json()["status"] == "pending"
     assert request.json()["patient_name"] == "Patient"
+    assert request.json()["reason"] == payload["reason"]
+    assert request.json()["additional_notes"] == payload["additional_notes"]
 
     duplicate = client.post("/api/v1/appointments", json=booking_payload(doctor.id))
     assert duplicate.status_code == 409
@@ -262,8 +267,16 @@ def test_cancel_reject_ownership_validation_and_doctor_approval(appointment_app)
             "appointment_date": (date.today() - timedelta(days=1)).isoformat(),
         },
     )
+    long_notes = client.post(
+        "/api/v1/appointments",
+        json={
+            **booking_payload(doctor.id),
+            "additional_notes": "x" * 501,
+        },
+    )
     assert invalid_time.status_code == 422
     assert past_date.status_code == 422
+    assert long_notes.status_code == 422
 
 
 def test_admin_can_cancel_problematic_pending_booking(appointment_app) -> None:
@@ -423,3 +436,77 @@ def test_inactive_doctor_reassignment_is_admin_managed(appointment_app) -> None:
     assert reassigned.json()["status"] == "pending"
     assert reassigned.json()["reassignment_requested"] is False
     assert reassigned.json()["admin_note"] == "Assigned to the next available doctor."
+
+
+def test_additive_schema_updates_preserve_existing_appointment_and_doctor_rows() -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    with engine.begin() as connection:
+        connection.exec_driver_sql(
+            """
+            CREATE TABLE appointments (
+                id INTEGER PRIMARY KEY,
+                patient_id INTEGER NOT NULL,
+                doctor_id INTEGER NOT NULL,
+                appointment_date DATE NOT NULL,
+                preferred_time VARCHAR(5) NOT NULL,
+                reason TEXT NOT NULL,
+                status VARCHAR(20) NOT NULL,
+                doctor_note TEXT,
+                admin_note TEXT,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL
+            )
+            """
+        )
+        connection.exec_driver_sql(
+            """
+            INSERT INTO appointments
+                (id, patient_id, doctor_id, appointment_date, preferred_time, reason,
+                 status, created_at, updated_at)
+            VALUES (41, 5, 21, '2027-01-12', '10:30', 'Existing appointment',
+                    'pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """
+        )
+        connection.exec_driver_sql(
+            """
+            CREATE TABLE doctor_profiles (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                clinic_name VARCHAR NOT NULL,
+                specialization VARCHAR,
+                city VARCHAR NOT NULL,
+                address VARCHAR NOT NULL,
+                phone VARCHAR NOT NULL,
+                consultation_hours VARCHAR,
+                about TEXT,
+                photo_url VARCHAR,
+                updated_at DATETIME
+            )
+            """
+        )
+        connection.exec_driver_sql(
+            """
+            INSERT INTO doctor_profiles
+                (id, user_id, clinic_name, city, address, phone)
+            VALUES (8, 21, 'Existing Clinic', 'Mangalore', 'Existing Road', '+10000000000')
+            """
+        )
+
+    session_factory = sessionmaker(bind=engine, autoflush=False)
+    with session_factory() as db:
+        ensure_appointment_schema(db)
+        ensure_doctor_profile_schema(db)
+        appointment = db.execute(
+            text("SELECT id, reason, additional_notes FROM appointments WHERE id = 41")
+        ).one()
+        profile = db.execute(
+            text("SELECT id, clinic_name, years_experience FROM doctor_profiles WHERE id = 8")
+        ).one()
+
+    assert appointment == (41, "Existing appointment", None)
+    assert profile == (8, "Existing Clinic", None)
+    engine.dispose()

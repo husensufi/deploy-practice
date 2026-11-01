@@ -14,7 +14,7 @@ The current application is a single FastAPI application:
 - `backend/legacy/database.py` and `backend/app/core/config.py` both resolve the existing root-level `pcos_gynocare.db` by absolute path. They share the original model definitions and database schema.
 - `backend/legacy/detection.py` computes BMI and the rule-based PCOS screening score, with an optional locally trained model estimate stored under `backend/models/`.
 - `backend/legacy/charts.py` generates report charts and `backend/legacy/pdf_report.py` assembles downloadable PDFs.
-- Both legacy and React GynoBuddy chat interfaces call the shared server-side service in `backend/ai/azure_openai.py`, which owns Azure OpenAI configuration, lazy client initialization, and deployment selection.
+- AI features use structured Markdown system prompts in `backend/app/prompts/`, loaded by `backend/app/services/ai.py`. Each prompt defines its role, objective, input trust boundaries, safety/privacy rules, and response format. Both legacy and React GynoBuddy interfaces use the same prompt loader and shared Azure OpenAI client in `backend/ai/azure_openai.py`.
 - `backend/legacy/train_model.py` trains optional Logistic Regression or Random Forest models from a separately supplied dataset.
 
 The legacy app still calls `Base.metadata.create_all(bind=engine)` at startup and serves Jinja templates/static assets through FastAPI. The new API does not create tables automatically. Both applications use the single existing root database; run only one server on a given port at a time.

@@ -12,6 +12,7 @@ class AppointmentCreateRequest(BaseModel):
     appointment_date: date
     preferred_time: str
     reason: str = Field(min_length=3, max_length=3000)
+    additional_notes: str | None = Field(default=None, max_length=500)
 
     @field_validator("appointment_date")
     @classmethod
@@ -35,6 +36,14 @@ class AppointmentCreateRequest(BaseModel):
         if len(normalized) < 3:
             raise ValueError("Please provide a reason for the appointment.")
         return normalized
+
+    @field_validator("additional_notes")
+    @classmethod
+    def normalize_additional_notes(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
 
 
 class AppointmentDecisionRequest(BaseModel):
@@ -168,6 +177,7 @@ class AppointmentResponse(BaseModel):
     appointment_date: date
     preferred_time: str
     reason: str
+    additional_notes: str | None
     status: AppointmentStatus
     doctor_note: str | None
     admin_note: str | None

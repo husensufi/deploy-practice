@@ -30,6 +30,10 @@ class User(Base):
     approval_status = Column(String, default="approved")
     rejection_reason = Column(Text, nullable=True)
     admin_notes = Column(Text, nullable=True)
+    approval_decided_at = Column(DateTime, nullable=True)
+    token_version = Column(Integer, default=0, nullable=False)
+    is_removed = Column(Boolean, default=False, nullable=False)
+    removed_at = Column(DateTime, nullable=True)
 
     # Preferred language: "en", "hi", or "kn"
     preferred_language = Column(String, default="en")

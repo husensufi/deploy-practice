@@ -13,6 +13,7 @@ const profileSchema = z.object({
   city: z.string().trim().min(1),
   address: z.string().trim().min(1),
   phone: z.string().trim().min(1),
+  years_experience: z.number().int().min(0).max(80).nullable(),
   consultation_hours: z.string(),
   about: z.string(),
   photo_url: z.string(),
@@ -24,6 +25,7 @@ const defaults = {
   city: "",
   address: "",
   phone: "",
+  years_experience: null,
   consultation_hours: "Mon–Sat, 10 AM – 6 PM",
   about: "",
   photo_url: "",
@@ -43,6 +45,9 @@ export default function DoctorProfilePage() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: defaults,
+  });
+  const { ref: experienceRef, ...experienceField } = register("years_experience", {
+    setValueAs: (value) => value === "" ? null : Number(value),
   });
 
   useEffect(() => {
@@ -79,6 +84,18 @@ export default function DoctorProfilePage() {
           <label className="form-field">Clinic phone
             <input type="tel" {...register("phone")} />
             {errors.phone && <span className="field-error">Enter a phone number.</span>}
+          </label>
+          <label className="form-field">Years of experience
+            <input
+              type="number"
+              min="0"
+              max="80"
+              step="1"
+              placeholder="Optional"
+              {...experienceField}
+              ref={experienceRef}
+            />
+            {errors.years_experience && <span className="field-error">Enter a number from 0 to 80.</span>}
           </label>
           <label className="form-field field-span">Address
             <input {...register("address")} />

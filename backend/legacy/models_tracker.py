@@ -19,7 +19,7 @@ the project stays organised as it grows (you'll thank yourself later).
 
 from sqlalchemy import Column, Integer, Float, String, Boolean, Date, DateTime, ForeignKey, Text
 from datetime import datetime
-from database import Base
+from .database import Base
 
 
 class PCOSProfile(Base):

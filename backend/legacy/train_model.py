@@ -5,7 +5,7 @@ Trains a real machine-learning model to predict PCOS from the same
 symptoms your app collects, and saves it so the website can use it.
 
 HOW TO RUN (in the VS Code terminal, venv active):
-    python train_model.py path\\to\\your_dataset.csv
+    python -m backend.legacy.train_model path\\to\\your_dataset.csv
 (.xlsx files also work.)
 
 DATASET (you must download it yourself — I cannot download it for you):
@@ -22,8 +22,8 @@ WHAT THE SCRIPT DOES (explain this in your viva):
     4. Checks each with 5-fold cross-validation on the training part.
     5. Evaluates the better one on the untouched 20% test part and
        prints accuracy, precision, recall, F1 and ROC-AUC.
-    6. Saves the model to models/pcos_model.joblib plus a report and a
-       confusion-matrix chart in the models/ folder.
+    6. Saves the model, report, and confusion-matrix chart under
+       backend/models/.
 
 IMPORTANT HONESTY NOTES:
     * Use the numbers THIS script prints on YOUR computer in your report.
@@ -35,12 +35,10 @@ IMPORTANT HONESTY NOTES:
       the website will not have them.
 """
 
-import os
 import sys
 import re
-import json
+from pathlib import Path
 import joblib
-import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
@@ -59,6 +57,7 @@ from sklearn.metrics import (accuracy_score, precision_score, recall_score,
 # The model's input features — order matters and must match detection.py
 FEATURES = ["age", "bmi", "cycle_irregular", "weight_gain",
             "hair_growth", "skin_darkening", "hair_loss", "pimples"]
+MODEL_OUTPUT_DIR = Path(__file__).resolve().parents[1] / "models"
 
 
 def norm(name: str) -> str:
@@ -132,8 +131,8 @@ def build_table(df):
 
 def main():
     if len(sys.argv) < 2:
-        sys.exit("Usage: python train_model.py path\\to\\dataset.csv")
-    os.makedirs("models", exist_ok=True)
+        sys.exit("Usage: python -m backend.legacy.train_model path\\to\\dataset.csv")
+    MODEL_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     df = load_dataset(sys.argv[1])
     X, y = build_table(df)
@@ -180,12 +179,15 @@ def main():
 
     ConfusionMatrixDisplay.from_predictions(y_test, pred, cmap="RdPu")
     plt.title(f"Confusion Matrix - {best_name}")
-    plt.savefig("models/confusion_matrix.png", dpi=140, bbox_inches="tight")
+    plt.savefig(MODEL_OUTPUT_DIR / "confusion_matrix.png", dpi=140, bbox_inches="tight")
 
-    joblib.dump({"model": best, "features": FEATURES, "name": best_name}, "models/pcos_model.joblib")
-    with open("models/training_report.txt", "w", encoding="utf-8") as f:
+    joblib.dump(
+        {"model": best, "features": FEATURES, "name": best_name},
+        MODEL_OUTPUT_DIR / "pcos_model.joblib",
+    )
+    with open(MODEL_OUTPUT_DIR / "training_report.txt", "w", encoding="utf-8") as f:
         f.write(report)
-    print("\nSaved: models/pcos_model.joblib, models/training_report.txt, models/confusion_matrix.png")
+    print(f"\nSaved model outputs in {MODEL_OUTPUT_DIR}")
     print("Restart the website; the result page will now show the ML estimate too.")
 
 

@@ -4,8 +4,8 @@ main.py
 This is the file you actually RUN. It starts the web server and
 defines every URL ("route") your website responds to.
 
-HOW TO RUN (do this in VS Code's terminal, inside this folder):
-    uvicorn main:app --reload
+HOW TO RUN from the repository root:
+    uvicorn backend.legacy.main:app --reload
 
 Then open your browser at:  http://127.0.0.1:8000
 
@@ -34,19 +34,24 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import date
 import json
-import os
+from pathlib import Path
 
-from database import engine, Base, get_db, SessionLocal
-from models import User
-from models_tracker import PCOSProfile, DailyLog
-from models_doctor import DoctorProfile
-from models_social import Connection, ChatMessage
-from auth import hash_password, verify_password, create_access_token, decode_access_token
-from detection import run_pcos_screening
-from charts import generate_all_charts
-from pdf_report import build_pdf_report
-from chatbot import get_ai_reply
+from .database import engine, Base, get_db, SessionLocal
+from .models import User
+from .models_tracker import PCOSProfile, DailyLog
+from .models_doctor import DoctorProfile
+from .models_social import Connection, ChatMessage
+from .auth import hash_password, verify_password, create_access_token, decode_access_token
+from .detection import run_pcos_screening
+from .charts import generate_all_charts
+from .pdf_report import build_pdf_report
+from .chatbot import get_ai_reply
 from pydantic import BaseModel
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+FRONTEND_ROOT = PROJECT_ROOT / "frontend"
+STATIC_ROOT = FRONTEND_ROOT / "public" / "static"
+TEMPLATE_ROOT = FRONTEND_ROOT / "legacy_templates"
 
 # ---- Create all database tables the first time the app runs ----
 Base.metadata.create_all(bind=engine)
@@ -54,10 +59,10 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Ashwini Asangi PCOS GynoCare")
 
 # ---- Serve static files (css, js, images) ----
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
 
 # ---- Templates (HTML pages) ----
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATE_ROOT)
 
 
 # =========================================================
@@ -200,7 +205,7 @@ def get_translations(lang: str):
     allowed = {"en", "hi", "kn"}
     if lang not in allowed:
         lang = "en"
-    file_path = os.path.join("static", "locales", f"{lang}.json")
+    file_path = STATIC_ROOT / "locales" / f"{lang}.json"
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return JSONResponse(content=data)

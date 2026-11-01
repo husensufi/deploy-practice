@@ -8,7 +8,7 @@ once to appear in the public Doctors directory that patients browse.
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from datetime import datetime
-from database import Base
+from .database import Base
 
 
 class DoctorProfile(Base):

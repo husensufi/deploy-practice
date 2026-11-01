@@ -1,103 +1,250 @@
-# Ashwini Asangi PCOS GynoCare — Part 1 (Auth + Multilingual Shell)
+# Ashwini Asangi PCOS GynoCare
 
-This is the very first working slice of your project: sign up, log in,
-log out, and a dashboard that switches between English, Hindi, and
-Kannada instantly — with zero page reload.
+PCOS GynoCare is a health-support application with a legacy FastAPI/Jinja2 interface and a newer React/Vite frontend backed by a modular FastAPI API. The migration is in progress: the legacy application remains available while features are moved to the new frontend.
 
-## What is inside this folder
+> **Health information:** The PCOS assessment is a screening aid, not a medical diagnosis. Consult a qualified healthcare professional about health concerns.
 
-```
+## Features
+
+### New React + API application
+
+- Patient and doctor registration, login, and logout using secure HTTP-only authentication cookies.
+- Patient dashboard, PCOS screening assessment, daily tracker, reports, and PDF download.
+- Doctor directory and doctor clinic profile management.
+- Friends and family connection requests, accepted-connection chat history, real-time WebSocket chat, care alerts, and game invitations.
+- GynoBuddy chat through a backend-configured Azure OpenAI deployment.
+- API documentation exposed by FastAPI.
+
+The existing SQLite database and current screening logic are reused. The new backend does not create or migrate database tables automatically.
+
+### Legacy application
+
+The original FastAPI/Jinja2 interface remains available as a fallback. It also contains features not yet migrated to React, including the games hub and individual games, yoga/exercise, and language switching (English, Hindi, and Kannada).
+
+## Project layout
+
+```text
 pcos_gynocare/
-├── main.py                 <- run this file, it starts everything
-├── database.py             <- connects to the database
-├── models.py                <- defines the "User" table
-├── auth.py                  <- password + login-token security
-├── requirements.txt         <- list of Python packages needed
-├── templates/
-│   ├── login.html
-│   ├── signup.html
-│   └── home.html
-└── static/
-    ├── css/style.css
-    ├── js/lang.js
-    └── locales/en.json, hi.json, kn.json   <- all your translated text
+├── backend/                 # Modular API, preserved legacy backend, and tests
+│   ├── app/
+│   ├── legacy/
+│   ├── Dockerfile
+│   ├── pytest.ini
+│   ├── .env.example
+│   └── requirements.txt
+├── frontend/                # React + Vite plus preserved legacy UI/assets
+│   ├── src/
+│   ├── legacy_templates/
+│   ├── public/static/
+│   ├── .dockerignore
+│   ├── Dockerfile
+│   ├── .env.example
+│   └── package.json
+├── docs/                    # Architecture, setup, API, and migration notes
+├── .dockerignore
+├── .env.example             # Legacy chatbot key template
+├── .gitignore
+├── docker-compose.yml
+├── README.md
+└── pcos_gynocare.db          # Existing SQLite database; preserve this file
 ```
 
-## Step 1 — Install Python (skip if already installed)
+## Requirements
 
-Download from https://www.python.org/downloads/ (choose version 3.11 or
-3.12). During install, tick the box that says **"Add Python to PATH"**.
+- Windows 10/11 with PowerShell (commands below use PowerShell syntax).
+- Python 3.11 or newer. Python 3.11 is used by the current project environment.
+- Node.js `20.19+` or `22.12+` (npm is included with Node.js).
 
-## Step 2 — Install VS Code (skip if already installed)
+Check the installed tools:
 
-Download from https://code.visualstudio.com/
-
-Once installed, open VS Code and install the **"Python" extension**
-(click the square icon on the left sidebar, search "Python", click
-Install — it's the one published by Microsoft).
-
-## Step 3 — Open this project folder in VS Code
-
-In VS Code: **File → Open Folder → select the `pcos_gynocare` folder.**
-
-## Step 4 — Open the Terminal inside VS Code
-
-Menu: **Terminal → New Terminal** (a black panel opens at the bottom —
-this is where you type commands, nowhere else).
-
-## Step 5 — Create a virtual environment (keeps this project's packages separate from everything else on your laptop)
-
-Type this in the terminal and press Enter:
-
-```
-python -m venv venv
+```powershell
+python --version
+node --version
+npm --version
 ```
 
-Then activate it:
+## Run the React application and API
 
-- **Windows:** `venv\Scripts\activate`
-- **Mac/Linux:** `source venv/bin/activate`
+Run the API and frontend in **two separate terminals**, from the repository root.
 
-You'll see `(venv)` appear at the start of the terminal line — that means
-it worked.
+### 1. Set up the Python API
 
-## Step 6 — Install the required packages
+Create and activate a virtual environment, then install the API dependencies:
 
-```
-pip install -r requirements.txt
-```
-
-Wait for it to finish (30 seconds to a couple of minutes).
-
-## Step 7 — Run the app
-
-```
-uvicorn main:app --reload
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r backend\requirements.txt
 ```
 
-You should see something like:
+If PowerShell prevents environment activation, either allow it for the current terminal with `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, or call the virtual-environment executables directly as shown in the test commands below.
+
+Copy the backend settings template:
+
+```powershell
+Copy-Item backend\.env.example backend\.env
 ```
-Uvicorn running on http://127.0.0.1:8000
+
+Edit `backend\.env` before running the API:
+
+- Set `SECRET_KEY` to a new random value at least 32 characters long. Generate one locally:
+
+  ```powershell
+  .\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(48))"
+  ```
+
+- **Use the existing project database.** The default database path is resolved from the repository location, independent of the current directory. Leave `DATABASE_URL` unset to use that default. If you set it, point it to the existing `pcos_gynocare.db` file with an absolute SQLite URL; do not use `:memory:` or a new database path unless intentionally testing against a separate database.
+- `ENVIRONMENT=development` is suitable for local development.
+- `FRONTEND_URL=http://localhost:5173` must match the browser's frontend origin. If Vite uses another port or hostname, update this setting and restart the API.
+- Azure OpenAI settings are optional for the rest of the app. To enable GynoBuddy, configure `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`, and `AZURE_OPENAI_API_VERSION`. Without them, the chat endpoint returns a configuration error rather than a canned response.
+
+Keep all real credentials in `backend\.env`. Never paste secrets into source files, README content, screenshots, issue reports, or commits. The `.env` files are ignored by Git.
+
+Start the API from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
 ```
 
-## Step 8 — Open it in your browser
+The API is available at:
 
-Go to: **http://127.0.0.1:8000**
+- Health check: <http://localhost:8000/api/v1/health>
+- Swagger UI: <http://localhost:8000/docs>
+- ReDoc: <http://localhost:8000/redoc>
 
-You'll land on the Login page. Click "Register Now", create an account,
-and you'll be taken straight to your dashboard. Try the EN / HI / KN
-buttons — every label changes instantly.
+### 2. Set up the React frontend
 
-## Every time you come back to work on it later
+Open another PowerShell terminal at the repository root:
 
-You only need to repeat Steps 4, then activate venv (Step 5's second
-command), then Step 7. You do NOT need to reinstall anything again.
+```powershell
+Set-Location frontend
+npm ci
+Copy-Item .env.example .env
+npm run dev
+```
 
-## What to tell me next
+Open the Vite URL shown in the terminal (normally <http://localhost:5173>). The checked-in `frontend/.env.example` points the frontend to `http://localhost:8000/api/v1`; adjust `VITE_API_BASE_URL` in `frontend/.env` if the API runs elsewhere.
 
-Once this is running for you, tell me **"Part 1 works"** (or tell me the
-exact error message if something breaks — copy-paste it exactly) and
-we will move to **Part 2: the Daily Tracker form** — all the fields you
-listed (age, weight, height, cycle regularity, hair growth, acne, cramp
-severity, and more), saved properly to the database and shown on a
-clean dashboard.
+Register a patient or doctor account in the new application to get started. Doctors can complete a clinic profile from their dashboard; patient-only pages are protected by role.
+
+### Stop and restart
+
+Press `Ctrl+C` in each terminal to stop its server. On a later run, start the API and frontend again:
+
+```powershell
+# API terminal, from the repository root
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
+```
+
+```powershell
+# Frontend terminal
+Set-Location frontend
+npm run dev
+```
+
+There is no need to reinstall dependencies unless a dependency manifest changes.
+
+## Run the legacy application
+
+The legacy app is optional when using the React frontend. To run it, use a separate virtual environment so the legacy dependency pins do not conflict with the new API environment:
+
+```powershell
+python -m venv legacy-venv
+.\legacy-venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r backend\legacy\requirements.txt
+uvicorn backend.legacy.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Then open <http://localhost:8000>. The legacy app and new API both default to port `8000`; stop one before starting the other, or configure a different port.
+
+The legacy GynoBuddy integration still uses its original Anthropic adapter; the React application uses Azure OpenAI through the backend. To configure the legacy chatbot, copy `.env.example` to `.env` in the repository root and set `ANTHROPIC_API_KEY`; keep this credential server-side and never expose it to Vite.
+
+## Run with Docker Compose
+
+Create `backend\.env` as described above before starting the containers. Docker Compose builds the React/Vite dev server and modular FastAPI API, exposes ports 5173/8000, and bind-mounts the existing root database file; it does not initialize or replace the database.
+
+```powershell
+docker compose up --build
+```
+
+Open <http://localhost:5173>. To stop the containers without removing the database:
+
+```powershell
+docker compose down
+```
+
+Do not use `docker compose down -v` as part of normal cleanup.
+
+## Optional ML model training
+
+The trainer is retained at `backend\legacy\train_model.py`. Install the legacy dependencies (including pandas, scikit-learn, and joblib), then provide your own properly licensed CSV/XLSX dataset:
+
+```powershell
+python -m backend.legacy.train_model path\to\your_dataset.csv
+```
+
+Generated model artifacts and reports are saved under `backend\models\`; the API can load the trained model from that directory. Dataset files are not included in this repository.
+
+## Tests and production build
+
+From the repository root, with the backend virtual environment and frontend dependencies installed:
+
+```powershell
+# Backend tests use an isolated in-memory SQLite database.
+.\.venv\Scripts\python.exe -m pytest -q -c backend\pytest.ini
+
+# Frontend tests
+Set-Location frontend
+npm test
+
+# Production frontend build
+npm run build
+```
+
+The frontend build is written to `frontend\dist\`. To preview a production build locally, run:
+
+```powershell
+npm run preview
+```
+
+## Database and data safety
+
+- The existing `pcos_gynocare.db` is the canonical local database; keep a backup before manually editing or moving it.
+- The new API references the current project database by default, using an absolute path derived from the backend location.
+- API tests use an isolated in-memory SQLite database and should not modify the canonical database.
+- No automatic schema migration is performed by the new API. Do not delete the database or run schema-changing scripts as part of normal setup.
+- Assessment data is stored as the user's current profile; the current schema does not retain multiple assessment submissions as history.
+
+## Troubleshooting
+
+### `SECRET_KEY` is missing or too short
+
+Set `SECRET_KEY` in `backend\.env` to a locally generated value of at least 32 characters, then restart the API.
+
+### Browser cannot call the API
+
+Confirm that the API is running, `frontend\.env` has the correct `VITE_API_BASE_URL`, and `FRONTEND_URL` in `backend\.env` exactly matches the Vite browser origin, including hostname and port. Restart both servers after changing either file.
+
+### WebSocket chat does not connect
+
+Sign in first, confirm that the connection request has been accepted, and ensure the frontend origin matches `FRONTEND_URL`. Chat access requires both a valid session cookie and an accepted connection.
+
+### GynoBuddy reports that it is not configured
+
+Set the four Azure OpenAI variables in `backend\.env` and restart the API. Never put the Azure API key in the frontend environment.
+
+### Port 8000 is already in use
+
+Stop the other server using that port, or start the API on another port and update `VITE_API_BASE_URL` accordingly. If the frontend hostname or port changes, also update `FRONTEND_URL`.
+
+## Documentation
+
+- [Project workflow diagram](docs/project-workflow.md)
+- [Architecture](docs/architecture.md)
+- [API documentation and route reference](docs/api-documentation.md)
+- [Existing application workflow](docs/existing-workflow.md)
+- [Database notes](docs/database.md)
+- [Feature preservation checklist](docs/feature-preservation-checklist.md)
+- [Technical findings](docs/technical-findings.md)

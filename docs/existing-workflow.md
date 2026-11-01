@@ -59,7 +59,7 @@ The present route does not implement delete or arbitrary-date create/update oper
 
 - `/chatbot` presents a browser-based chat panel.
 - The browser sends the conversation history to `POST /api/chatbot`.
-- `chatbot.py` forwards it to Anthropic when configured; without a key, it returns an explicit not-connected message.
+- `backend/legacy/chatbot.py` forwards it to Anthropic when configured; without a key, it returns an explicit not-connected message.
 - Chatbot history currently exists only in browser memory and is not persisted.
 
 ### Games, yoga, and language
@@ -128,7 +128,7 @@ No `/api/v1` REST API currently exists. Most data-changing operations use HTML f
 
 ## Existing frontend pages
 
-| Template | Purpose |
+| Template (`frontend/legacy_templates/`) | Purpose |
 |---|---|
 | `login.html`, `signup.html` | Login and registration; signup selects patient/doctor role |
 | `home.html` | Shared welcome page and navigation |

@@ -2,18 +2,18 @@
 
 ## Findings
 
-1. **Monolithic route module:** `main.py` mixes HTML rendering, forms, auth checks, SQLAlchemy queries, WebSocket management, report generation calls, and feature handlers.
-2. **Relative database path:** `sqlite:///./pcos_gynocare.db` depends on the current working directory. The new backend must resolve the existing file reliably and must not initialize a second empty database accidentally.
-3. **Schema bootstrap on import:** `Base.metadata.create_all()` executes during `main.py` import. Startup behavior should be explicit and must not be used as a substitute for controlled migrations.
-4. **Authentication secret is hard-coded:** `auth.py` defines a default JWT secret in source. Move configuration to backend environment variables and require a secure secret in non-development deployments.
+1. **Monolithic legacy route module:** `backend/legacy/main.py` retains HTML rendering, forms, auth checks, SQLAlchemy queries, WebSocket management, report generation calls, and feature handlers as a fallback.
+2. **Database location:** both the new API and retained legacy app now resolve the canonical root-level `pcos_gynocare.db` independently of the working directory.
+3. **Legacy schema bootstrap:** `Base.metadata.create_all()` executes during legacy app import. The modular API does not create tables; startup behavior should be explicit and should not substitute for controlled migrations.
+4. **Legacy authentication secret is hard-coded:** `backend/legacy/auth.py` defines a default JWT secret in source. The modular API uses a backend environment variable and requires a secure secret.
 5. **Cookie policy is incomplete for production:** the token is `httpOnly`, but current `set_cookie` calls do not specify `secure` or `samesite`. Configure these based on deployment and the frontend/backend origin strategy.
 6. **No CORS/API boundary yet:** the current HTML application is served from the same FastAPI origin; independent Vite development requires deliberate CORS and credential configuration.
 7. **HTML-first handlers:** most feature handlers return templates or redirects. The target frontend needs JSON schemas and API routes, while preserving the original field behavior and redirects where appropriate.
 8. **Data model limitations:** `PCOSProfile` is one-to-one with user and overwritten on submit; there is no assessment history. The `daily_logs` table has no unique database constraint for `(user_id, log_date)` although the route upserts by that pair.
 9. **Consent model absent:** doctor profiles are public in the directory, but there are no patient report-sharing grants or authorized patient-record routes. Do not expose clinical records to doctors or their chatbot without designing consent and access controls.
-10. **Chatbot uses Anthropic:** `chatbot.py`, `.env.example`, and `requirements.txt` reference Anthropic. Responses expose exception text to the caller, while unavailable configuration is represented as a reply string. Azure replacement should use server-only credentials and explicit HTTP/API errors.
+10. **Two chatbot integrations remain:** `backend/legacy/chatbot.py` uses Anthropic; the React application uses Azure OpenAI through the new API. The legacy adapter still needs migration before Anthropic can be removed.
 11. **Error handling and logging:** the WebSocket broadcast and optional ML estimation paths catch broad exceptions; the chatbot also catches broadly. Tighten error handling during the migration without silently converting operational failures to success.
-12. **No project tests found:** add tests before claiming behavior parity. Existing `detection.py` is a suitable first target for deterministic tests.
+12. **Migration test coverage:** API workflow and React UI tests cover migrated flows; remaining legacy/ML paths need ongoing regression coverage.
 13. **Page/UI limitations:** the home page is a welcome shell rather than the data-driven dashboard described in the target. Several pages share navigation; game pages contain inline scripts and load Three.js from a CDN. There is no doctor-specific dashboard today.
 14. **Unimplemented UI action:** the login template's “Forgot Password?” link points to `#`; no reset workflow or route exists.
 15. **No custom REST API versioning:** current JSON routes are `/api/translations/{lang}` and `/api/chatbot`; no `/api/v1` router exists.

@@ -8,17 +8,16 @@ This is the Phase 1 baseline for the existing Ashwini Asangi PCOS GynoCare appli
 
 The current application is a single FastAPI application:
 
-- `main.py` owns route registration, authentication checks, database queries, server-rendered Jinja2 pages, and the WebSocket chat handler.
-- `database.py` creates the SQLAlchemy engine and sessions for `sqlite:///./pcos_gynocare.db`.
-- `models.py`, `models_tracker.py`, `models_doctor.py`, and `models_social.py` declare the six database tables.
-- `auth.py` hashes passwords and creates/decodes JWTs.
-- `detection.py` computes BMI and the rule-based PCOS screening score, with an optional locally trained model estimate.
-- `charts.py` generates reports charts as PNG images; `pdf_report.py` assembles downloadable PDFs.
-- `chatbot.py` calls Anthropic's Python SDK when `ANTHROPIC_API_KEY` is configured.
-- `train_model.py` trains optional Logistic Regression or Random Forest models from a separately supplied dataset. No model or dataset was assumed present.
-- `templates/` contains 18 Jinja2 pages. `static/css/style.css`, `static/js/lang.js`, and `static/locales/{en,hi,kn}.json` provide styling and multilingual behavior.
+- `backend/app/` owns the modular versioned JSON API, security, database session, schemas, and service layer.
+- `backend/legacy/` contains the retained Jinja2 FastAPI server, original SQLAlchemy model declarations, authentication/scoring/report logic, and ML trainer.
+- `frontend/src/` contains the React/Vite application. `frontend/legacy_templates/` and `frontend/public/static/` retain the legacy Jinja pages, styling, scripts, and locales while their workflows are migrated.
+- `backend/legacy/database.py` and `backend/app/core/config.py` both resolve the existing root-level `pcos_gynocare.db` by absolute path. They share the original model definitions and database schema.
+- `backend/legacy/detection.py` computes BMI and the rule-based PCOS screening score, with an optional locally trained model estimate stored under `backend/models/`.
+- `backend/legacy/charts.py` generates report charts and `backend/legacy/pdf_report.py` assembles downloadable PDFs.
+- The legacy `backend/legacy/chatbot.py` calls Anthropic; the React application uses the modular API's server-only Azure OpenAI integration.
+- `backend/legacy/train_model.py` trains optional Logistic Regression or Random Forest models from a separately supplied dataset.
 
-At startup, `main.py` calls `Base.metadata.create_all(bind=engine)`. FastAPI serves both HTML and JSON responses and mounts `/static`; the browser communicates with it using HTML form submissions, `fetch`, and a WebSocket.
+The legacy app still calls `Base.metadata.create_all(bind=engine)` at startup and serves Jinja templates/static assets through FastAPI. The new API does not create tables automatically. Both applications use the single existing root database; run only one server on a given port at a time.
 
 ## Existing technology and integrations
 
@@ -44,4 +43,4 @@ The target API names and desired UI should be treated as proposed structure, not
 
 ## Existing high-level workflow
 
-See [existing-workflow.md](./existing-workflow.md) for user flows and route inventory. The current [project workflow diagram](../PROJECT_WORKFLOW.md) is a visual overview and should be updated as the migration advances.
+See [existing-workflow.md](./existing-workflow.md) for user flows and route inventory. The [project workflow diagram](./project-workflow.md) is a visual overview of the current migration.

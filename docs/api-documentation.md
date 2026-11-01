@@ -1,6 +1,6 @@
 # Existing API and Route Reference
 
-This document covers both the original HTML routes in root `main.py` and the new `/api/v1` backend APIs. The original app remains available as a parallel fallback. Social API migration is underway; chatbot behavior is available through the new backend.
+This document covers both the original HTML routes in `backend/legacy/main.py` and the new `/api/v1` backend APIs. The original app remains available as a parallel fallback.
 
 ## Authentication and language
 

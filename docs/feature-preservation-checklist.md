@@ -10,7 +10,7 @@ Phase 1 baseline: items below are **present** only where described as implemente
 | Password security | Hashed passwords; never return hashes to frontend | [ ] |
 | Role handling | Doctor-only clinic-profile routes and navigation behavior | [ ] |
 | PCOS assessment form | Age, measurements, cycle, cycle length, seven symptom flags | [ ] |
-| BMI | Existing height/weight calculation and rounding in `detection.py` | [ ] |
+| BMI | Existing height/weight calculation and rounding in `backend/legacy/detection.py` | [ ] |
 | Screening score | Existing weights, max score, and Low/Moderate/High thresholds unchanged | [ ] |
 | Screening disclaimer | Clearly state screening is not a diagnosis | [ ] |
 | Assessment history | **Not present**; a single profile is updated in place. Do not imply history exists. | N/A |

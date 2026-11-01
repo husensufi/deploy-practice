@@ -1,61 +1,84 @@
-# Existing Local Setup
+# Local Setup
 
-These are the instructions for running the original application during the migration. The existing app remains at the project root until a replacement is tested and accepted.
+The project has a modular FastAPI API and React/Vite frontend. The original Jinja2 application, translations, and features not yet migrated are retained under `backend/legacy/` and `frontend/legacy_templates/`.
 
-## Prerequisites
+## Requirements
 
-- Python 3.11 or 3.12 is recommended by the existing README.
-- PowerShell or a VS Code terminal on Windows.
+- Python 3.11 or newer
+- Node.js 20.19+ or 22.12+ with npm
+- Windows PowerShell examples below; adapt paths for another operating system
 
-## Install and run
+## New React frontend and API
 
-From the project root:
+Create a Python environment and install API dependencies from the repository root:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-uvicorn main:app --reload
+python -m pip install -r backend\requirements.txt
+Copy-Item backend\.env.example backend\.env
 ```
 
-Open `http://127.0.0.1:8000`. FastAPI's OpenAPI page is at `http://127.0.0.1:8000/docs`.
+Set a `SECRET_KEY` of at least 32 characters in `backend\.env` (generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`). The default database is the original root-level `pcos_gynocare.db`; leave `DATABASE_URL` unset unless you intentionally need an alternate persistent SQLite file. Configure the Azure OpenAI endpoint, key, deployment, and API version to enable GynoBuddy.
 
-The server currently reads `sqlite:///./pcos_gynocare.db` relative to the working directory. Start it from the project root to ensure it uses the intended file. Correcting this path to a configurable absolute location is a migration requirement; do not move, replace, or duplicate the original database as part of setup.
-
-## Chat and backend configuration
-
-The original server-rendered app still uses its legacy `ANTHROPIC_API_KEY` integration. The independent React app uses Azure OpenAI through the backend only. Copy `backend/.env.example` to `backend/.env`, set a random `SECRET_KEY` of at least 32 characters, and configure the Azure endpoint, key, deployment name, and API version to enable GynoBuddy. The checked-in example contains placeholders, not working credentials. Never copy real credentials into source or documentation. Without Azure settings, the chat API explicitly responds with HTTP 503.
-
-Generate a secret locally with:
+Start the API from the repository root:
 
 ```powershell
-python -c "import secrets; print(secrets.token_urlsafe(48))"
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --reload --host 127.0.0.1 --port 8000
 ```
 
-## Current test status
-
-Backend API tests use an isolated in-memory SQLite database. Frontend tests run in Vitest and mock the API for authentication and GynoBuddy workflows. These do not modify the original database. Run them with:
+In another terminal:
 
 ```powershell
-..\.venv\Scripts\python.exe -m pytest -q
+Set-Location frontend
+npm ci
+Copy-Item .env.example .env
+npm run dev
+```
+
+Open <http://localhost:5173>. API docs are at <http://localhost:8000/docs>. Keep `FRONTEND_URL` in the backend environment matched with the browser origin.
+
+## Original server-rendered application
+
+Use a separate environment for the original application and ML dependencies:
+
+```powershell
+python -m venv legacy-venv
+.\legacy-venv\Scripts\Activate.ps1
+python -m pip install -r backend\legacy\requirements.txt
+uvicorn backend.legacy.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Open <http://localhost:8000>. It uses the same original SQLite database, legacy Jinja templates in the frontend tree, and assets under `frontend/public/static`. Run either the legacy app or the API on port 8000 at a time. The legacy chatbot uses an optional Anthropic key in the root `.env`; the React chatbot uses Azure OpenAI variables in `backend/.env`.
+
+## Tests and build
+
+Run backend tests from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q -c backend\pytest.ini
+```
+
+Run frontend tests and build:
+
+```powershell
+Set-Location frontend
 npm test
 npm run build
 ```
 
-## New application scaffold (feature migration in progress)
+Tests use isolated in-memory SQLite and do not alter the canonical database. Never delete or reset `pcos_gynocare.db`.
 
-The independent Vite frontend and FastAPI backend now include authentication, patient assessment/tracking/reports, doctor directory/profile, and the Azure-backed chat interface. Social messaging, games, yoga, and language switching are still being migrated. Keep the original application available until the remaining workflows are implemented and verified.
+## Optional ML model training
 
-```powershell
-Set-Location frontend
-npm install
-npm run dev
-```
+The retained trainer uses the legacy environment's pandas, scikit-learn, and joblib packages. It expects a separately supplied, properly licensed dataset:
 
 ```powershell
-Set-Location backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+python -m backend.legacy.train_model path\to\your_dataset.csv
 ```
+
+Model artifacts and reports are generated under `backend/models/`. No dataset or trained artifact is included in the repository.
+
+## AI configuration
+
+The React app uses Azure OpenAI credentials in `backend/.env`. The retained legacy chatbot still expects `ANTHROPIC_API_KEY` in the root `.env`. Neither provider key belongs in frontend environment variables or source control. The legacy AI adapter has not yet been replaced.

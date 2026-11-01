@@ -1,25 +1,19 @@
 """
 database.py
 -----------
-This file sets up the connection to our database.
-
-We are using SQLite for now (a single file database called
-pcos_gynocare.db that gets created automatically the first time
-you run the app). SQLite needs ZERO installation — perfect for
-development and for demoing in your interview.
-
-Later, when you move to real users, you only change ONE line
-(DATABASE_URL) to point to PostgreSQL/MySQL. Nothing else in the
-project needs to change. That is the whole point of using SQLAlchemy.
+This module connects the retained application to the canonical project
+SQLite database, regardless of the process working directory.
 """
 
+from pathlib import Path
+
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# ---- Connection string ----
-# sqlite:///./pcos_gynocare.db  ->  create/use a file named
-# pcos_gynocare.db in the same folder as this script.
-DATABASE_URL = "sqlite:///./pcos_gynocare.db"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATABASE_PATH = PROJECT_ROOT / "pcos_gynocare.db"
+DATABASE_URL = URL.create("sqlite", database=str(DATABASE_PATH))
 
 # check_same_thread=False is required only for SQLite, because
 # FastAPI can talk to the DB from different threads.

@@ -2,7 +2,7 @@
 
 ## Source of truth
 
-The existing database is `pcos_gynocare.db` at the project root. The current engine URL is the relative path `sqlite:///./pcos_gynocare.db` in `database.py`. Because it is relative to the process working directory, launching from a different directory can point to or create a different file. The refactor must resolve a configurable path to this existing file without creating competing copies.
+The existing database is `pcos_gynocare.db` at the project root and remains the one canonical SQLite file. Both `backend/app/core/config.py` and `backend/legacy/database.py` resolve its absolute path independent of the process working directory. The API supports a persistent SQLite `DATABASE_URL` override; do not use `:memory:` outside tests or create duplicate production database files.
 
 Phase 1 inspected the database in read-only mode. At inspection time, it contained six application tables; `users` had one row, and the other five tables had zero rows. No user values were read into documentation. The database file was approximately 69 KB. No schema migration was performed or indicated by this inspection.
 

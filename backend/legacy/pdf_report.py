@@ -19,7 +19,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-from charts import generate_all_charts_bytes
+from .charts import generate_all_charts_bytes
 
 PLUM = colors.HexColor("#3F1B3D")
 ROSE = colors.HexColor("#D6667A")

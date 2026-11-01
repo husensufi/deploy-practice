@@ -34,6 +34,7 @@ clinical literature; weights reflect how strongly each is associated):
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -54,14 +55,14 @@ def calculate_bmi(weight_kg: float, height_cm: float) -> float:
 def ml_estimate(profile):
     """
     Returns the trained ML model's PCOS probability (0-1), or None if no
-    model has been trained yet (run train_model.py to create one).
+    model has been trained yet (run backend.legacy.train_model to create one).
     Any problem here must never break the website, hence the try/except.
     """
     try:
         import os
         import joblib
         import pandas as pd
-        path = os.path.join("models", "pcos_model.joblib")
+        path = Path(__file__).resolve().parents[1] / "models" / "pcos_model.joblib"
         if not os.path.exists(path):
             return None
         bundle = joblib.load(path)

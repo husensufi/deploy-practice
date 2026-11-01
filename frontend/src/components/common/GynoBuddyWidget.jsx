@@ -19,7 +19,7 @@ export default function GynoBuddyWidget() {
     setIsSending(true);
 
     try {
-      const response = await apiRequest("/chat/reply", {
+      const response = await apiRequest("/ai/patient/gynobuddy/chat", {
         method: "POST",
         data: {
           messages: nextMessages.filter((message) => message.role !== "error"),

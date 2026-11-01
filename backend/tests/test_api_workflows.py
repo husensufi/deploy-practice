@@ -36,6 +36,8 @@ def client(monkeypatch):
             db.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    app.state.test_session = test_session
+    monkeypatch.setattr("app.main.SessionLocal", test_session)
     monkeypatch.setattr(websocket_routes, "SessionLocal", test_session)
     monkeypatch.setattr(
         security,
@@ -45,10 +47,12 @@ def client(monkeypatch):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+    del app.state.test_session
     test_engine.dispose()
 
 
 def register(client: TestClient, role: str = "patient") -> dict:
+    registration_role = "patient" if role == "doctor" else role
     response = client.post(
         "/api/v1/auth/register",
         json={
@@ -57,11 +61,22 @@ def register(client: TestClient, role: str = "patient") -> dict:
             "mobile": "+10000000001" if role == "doctor" else "+10000000000",
             "password": "test-password",
             "confirm_password": "test-password",
-            "role": role,
+            "role": registration_role,
         },
     )
     assert response.status_code == 201
-    return response.json()
+    account = response.json()
+    if role == "doctor":
+        # Doctor accounts are admin-managed; create the test principal only after
+        # exercising the supported patient registration endpoint.
+        with app.state.test_session() as db:
+            doctor = db.query(User).filter(User.id == account["id"]).one()
+            doctor.role = "doctor"
+            doctor.is_active = True
+            doctor.approval_status = "approved"
+            db.commit()
+        account["role"] = "doctor"
+    return account
 
 
 def test_patient_auth_assessment_and_tracker_workflow(client: TestClient) -> None:
@@ -232,10 +247,22 @@ def test_registration_rejects_duplicate_email_and_invalid_payloads(
             "role": "patient",
         },
     )
+    public_doctor_signup = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Doctor Applicant",
+            "email": "doctor-applicant@example.test",
+            "mobile": "+10000000005",
+            "password": "test-password",
+            "confirm_password": "test-password",
+            "role": "doctor",
+        },
+    )
 
     assert duplicate.status_code == 409
     assert mismatched_password.status_code == 422
     assert invalid_email.status_code == 422
+    assert public_doctor_signup.status_code == 422
 
 
 def test_doctor_routes_are_role_protected_and_directory_uses_saved_profile(
@@ -344,7 +371,10 @@ def test_chat_uses_configured_azure_openai_and_requires_authentication(
     assert response.status_code == 200
     assert response.json() == {"reply": "PCOS varies by person."}
     assert request_arguments["completion"]["model"] == "test-deployment"
-    assert request_arguments["completion"]["messages"][1]["content"] == "What is PCOS?"
+    assert request_arguments["completion"]["messages"][0]["role"] == "system"
+    generated_request = request_arguments["completion"]["messages"][1]["content"]
+    assert '"content": "What is PCOS?"' in generated_request
+    assert '"content": "Does it affect everyone equally?"' in generated_request
     assert request_arguments["client"] == (
         "https://example.openai.azure.com",
         "test-key",

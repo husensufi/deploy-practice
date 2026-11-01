@@ -5,11 +5,24 @@ from fastapi.testclient import TestClient
 
 from app.core.config import PROJECT_ROOT, settings
 from app.main import app
+from legacy.database import Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 
-def test_health_endpoint_reports_api_status() -> None:
+def test_health_endpoint_reports_api_status(monkeypatch) -> None:
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(bind=engine)
+    test_session = sessionmaker(bind=engine, autoflush=False)
+    monkeypatch.setattr("app.main.SessionLocal", test_session)
     with TestClient(app) as client:
         response = client.get("/api/v1/health")
+    engine.dispose()
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}

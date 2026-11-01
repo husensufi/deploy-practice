@@ -7,6 +7,9 @@ import LoginPage from "./pages/auth/LoginPage.jsx";
 import SignupPage from "./pages/auth/SignupPage.jsx";
 
 const AssessmentPage = lazy(() => import("./pages/assessment/AssessmentPage.jsx"));
+const AdminAppointmentsPage = lazy(() => import("./pages/appointments/AdminAppointmentsPage.jsx"));
+const DoctorAppointmentsPage = lazy(() => import("./pages/appointments/DoctorAppointmentsPage.jsx"));
+const PatientAppointmentsPage = lazy(() => import("./pages/appointments/PatientAppointmentsPage.jsx"));
 const ConnectionChatPage = lazy(() => import("./pages/connections/ConnectionChatPage.jsx"));
 const ConnectionsPage = lazy(() => import("./pages/connections/ConnectionsPage.jsx"));
 const DoctorProfilePage = lazy(() => import("./pages/doctors/DoctorProfilePage.jsx"));
@@ -38,6 +41,7 @@ export default function App() {
               <Route path="/tracker" element={<TrackerPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/doctors" element={<DoctorsPage />} />
+              <Route path="/appointments" element={<PatientAppointmentsPage />} />
               <Route path="/movement" element={<MovementPage />} />
               <Route path="/movement/:tutorialId" element={<MovementTutorialPage />} />
               <Route path="/games" element={<GamesPage />} />
@@ -45,9 +49,11 @@ export default function App() {
             </Route>
             <Route element={<ProtectedRoute roles={["admin"]} />}>
               <Route path="/admin" element={<HomePage />} />
+              <Route path="/admin/appointments" element={<AdminAppointmentsPage />} />
             </Route>
             <Route element={<ProtectedRoute roles={["doctor"]} />}>
               <Route path="/doctor/profile" element={<DoctorProfilePage />} />
+              <Route path="/doctor/appointments" element={<DoctorAppointmentsPage />} />
             </Route>
           </Route>
         </Route>

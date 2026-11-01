@@ -69,6 +69,18 @@ npm run build
 
 Tests use isolated in-memory SQLite and do not alter the canonical database. Never delete or reset `pcos_gynocare.db`.
 
+## Appointments
+
+The API adds the `appointments` table to the existing SQLite database at startup when it is missing; existing tables and records are retained. The patient doctor directory only lists doctors whose accounts are active and approved by Admin.
+
+Authenticated appointment endpoints:
+
+- Patients: `GET` and `POST /api/v1/appointments`; `POST /api/v1/appointments/{id}/cancel`
+- Doctors: `GET /api/v1/doctor/appointments`; `POST /api/v1/doctor/appointments/{id}/decision`; `POST /api/v1/doctor/appointments/{id}/complete`
+- Admins: `GET /api/v1/admin/appointments` with optional `doctor_id`, `patient_id`, `status`, `date_from`, and `date_to` filters; `POST /api/v1/admin/appointments/{id}/cancel`
+
+Only pending appointments can be cancelled by the patient. Doctors may decide only their own pending appointments and complete only accepted appointments. Admin cancellation requires a recorded reason. A database uniqueness constraint prevents overlapping pending/accepted bookings for a doctor and slot while allowing released slots to be booked again.
+
 ## Optional ML model training
 
 The retained trainer uses the legacy environment's pandas, scikit-learn, and joblib packages. It expects a separately supplied, properly licensed dataset:

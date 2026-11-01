@@ -72,6 +72,8 @@ describe("movement tutorials", () => {
   afterEach(() => {
     cleanup();
     apiRequestMock.mockReset();
+    userMock.role = "patient";
+    userMock.full_name = "Test Patient";
   });
 
   it("loads the legacy pose catalog and opens step-by-step details", async () => {
@@ -281,5 +283,81 @@ describe("wellness games", () => {
     expect(screen.getByRole("link", { name: "Play a game" }).getAttribute("href")).toBe(
       "/games",
     );
+  });
+
+  it("renders the patient AI workspace and triggers a real health insights call", async () => {
+    userMock.role = "patient";
+    userMock.full_name = "Test Patient";
+    apiRequestMock.mockImplementation((path, config) => {
+      if (path === "/patients/dashboard") {
+        return Promise.resolve({
+          screening_result: null,
+          today_log: null,
+          recent_logs: [],
+        });
+      }
+      if (path === "/ai/patient/health-insights") {
+        return Promise.resolve({ summary: "Your health trends look stable." });
+      }
+      return Promise.resolve({});
+    });
+
+    renderWithRoutes("/home", [
+      <Route path="/home" element={<HomePage />} key="home" />,
+    ]);
+
+    expect(await screen.findByRole("heading", { name: "AI Health Assistant" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Health insights" }));
+
+    await waitFor(() => {
+      expect(apiRequestMock).toHaveBeenCalledWith(
+        "/ai/patient/health-insights",
+        expect.objectContaining({
+          method: "POST",
+          data: { prompt: "Summarize my recent health trends and next steps." },
+        }),
+      );
+    });
+    expect(await screen.findByText("Your health trends look stable.")).toBeTruthy();
+  });
+
+  it("renders the admin AI workspace and triggers the admin assistant call", async () => {
+    userMock.role = "admin";
+    userMock.full_name = "Test Admin";
+    apiRequestMock.mockImplementation((path, config) => {
+      if (path === "/admin/dashboard") {
+        return Promise.resolve({
+          total_patients: 12,
+          total_doctors: 5,
+          approved_doctors: 4,
+          pending_doctor_approvals: 1,
+          rejected_doctors: 0,
+          active_doctors: 4,
+          recent_patient_registrations: [],
+        });
+      }
+      if (path === "/ai/admin/assistant") {
+        return Promise.resolve({ answer: "Platform activity is stable." });
+      }
+      return Promise.resolve({});
+    });
+
+    renderWithRoutes("/home", [
+      <Route path="/home" element={<HomePage />} key="home" />,
+    ]);
+
+    expect(await screen.findByRole("heading", { name: "AI Admin Assistant" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+
+    await waitFor(() => {
+      expect(apiRequestMock).toHaveBeenCalledWith(
+        "/ai/admin/assistant",
+        expect.objectContaining({
+          method: "POST",
+          data: { question: "How many patients registered this month?" },
+        }),
+      );
+    });
+    expect(await screen.findByText("Platform activity is stable.")).toBeTruthy();
   });
 });

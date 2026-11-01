@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.api.v1.routes.chat_websocket import router as websocket_router
-from app.core.admin import seed_admin_account
+from app.core.admin import ensure_appointment_schema, seed_admin_account
 from app.core.config import settings
 from app.database.session import SessionLocal
 
@@ -25,6 +25,7 @@ app.add_middleware(
 def startup() -> None:
     with SessionLocal() as db:
         seed_admin_account(db)
+        ensure_appointment_schema(db)
 
 
 app.include_router(api_router, prefix="/api/v1")

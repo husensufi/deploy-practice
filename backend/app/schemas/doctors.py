@@ -18,6 +18,7 @@ class DoctorProfileSubmitRequest(BaseModel):
 
 class DoctorDirectoryEntry(BaseModel):
     id: int
+    user_id: int
     full_name: str
     specialization: str
     clinic_name: str

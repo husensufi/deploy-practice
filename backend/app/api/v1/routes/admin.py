@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
-from app.core.legacy import User, hash_password
+from app.core.legacy import Appointment, User, hash_password
 from app.core.security import require_admin
 from app.database.session import get_db
 from app.schemas.admin import (
@@ -22,6 +22,8 @@ def admin_dashboard(
 ) -> dict:
     patients = db.query(User).filter(User.role == "patient").all()
     doctors = db.query(User).filter(User.role == "doctor").all()
+    patient_account = aliased(User)
+    doctor_account = aliased(User)
 
     summary = {
         "total_patients": len(patients),
@@ -31,10 +33,13 @@ def admin_dashboard(
         "rejected_doctors": sum(1 for doctor in doctors if getattr(doctor, "approval_status", "approved") == "rejected"),
         "active_doctors": sum(1 for doctor in doctors if getattr(doctor, "is_active", True) and getattr(doctor, "approval_status", "approved") == "approved"),
         "inactive_doctors": sum(1 for doctor in doctors if not getattr(doctor, "is_active", True)),
-        "total_appointments": 0,
-        "pending_appointments": 0,
-        "accepted_appointments": 0,
-        "rejected_appointments": 0,
+        "total_appointments": db.query(Appointment).count(),
+        "pending_appointments": db.query(Appointment).filter(Appointment.status == "pending").count(),
+        "accepted_appointments": db.query(Appointment).filter(Appointment.status == "accepted").count(),
+        "rejected_appointments": db.query(Appointment).filter(Appointment.status == "rejected").count(),
+        "cancelled_appointments": db.query(Appointment).filter(Appointment.status == "cancelled").count(),
+        "completed_appointments": db.query(Appointment).filter(Appointment.status == "completed").count(),
+        "rescheduled_appointments": db.query(Appointment).filter(Appointment.status == "rescheduled").count(),
         "recent_patient_registrations": [
             {"id": patient.id, "full_name": patient.full_name, "email": patient.email, "created_at": patient.created_at.isoformat() if patient.created_at else None}
             for patient in sorted(patients, key=lambda item: item.created_at or datetime.min, reverse=True)[:5]
@@ -49,7 +54,26 @@ def admin_dashboard(
             for doctor in doctors
             if getattr(doctor, "approval_status", "approved") == "pending"
         ],
-        "recent_appointment_activity": [],
+        "recent_appointment_activity": [
+            {
+                "id": appointment.id,
+                "patient_id": appointment.patient_id,
+                "patient_name": patient.full_name,
+                "doctor_id": appointment.doctor_id,
+                "doctor_name": doctor.full_name,
+                "appointment_date": appointment.appointment_date.isoformat(),
+                "preferred_time": appointment.preferred_time,
+                "status": appointment.status,
+            }
+            for appointment, patient, doctor in (
+                db.query(Appointment, patient_account, doctor_account)
+                .join(patient_account, Appointment.patient_id == patient_account.id)
+                .join(doctor_account, Appointment.doctor_id == doctor_account.id)
+                .order_by(Appointment.created_at.desc())
+                .limit(5)
+                .all()
+            )
+        ],
     }
     return summary
 

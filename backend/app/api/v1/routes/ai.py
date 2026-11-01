@@ -6,10 +6,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ai.azure_openai import AzureOpenAIConfigurationError
-from app.core.legacy import DailyLog, DoctorProfile, PCOSProfile, User
+from app.core.legacy import Appointment, DailyLog, DoctorProfile, PCOSProfile, User
 from app.core.security import get_current_user, require_admin, require_doctor, require_patient
 from app.database.session import get_db
-from app.models import Connection
 from app.schemas.ai import (
     AIAdminAssistantRequest,
     AIChatRequest,
@@ -70,9 +69,9 @@ def _platform_snapshot(db: Session) -> dict:
         .all()
     ]
 
-    pending_appointments = db.query(Connection).filter(Connection.status == "pending").count()
-    accepted_appointments = db.query(Connection).filter(Connection.status == "accepted").count()
-    rejected_appointments = 0
+    pending_appointments = db.query(Appointment).filter(Appointment.status == "pending").count()
+    accepted_appointments = db.query(Appointment).filter(Appointment.status == "accepted").count()
+    rejected_appointments = db.query(Appointment).filter(Appointment.status == "rejected").count()
 
     return {
         "patients": patient_count,
@@ -86,6 +85,9 @@ def _platform_snapshot(db: Session) -> dict:
         "pending_appointments": pending_appointments,
         "accepted_appointments": accepted_appointments,
         "rejected_appointments": rejected_appointments,
+        "cancelled_appointments": db.query(Appointment).filter(Appointment.status == "cancelled").count(),
+        "completed_appointments": db.query(Appointment).filter(Appointment.status == "completed").count(),
+        "rescheduled_appointments": db.query(Appointment).filter(Appointment.status == "rescheduled").count(),
         "generated_at": datetime.utcnow().isoformat(),
     }
 

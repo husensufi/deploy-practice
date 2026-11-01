@@ -21,12 +21,18 @@ def list_doctors(
     rows = (
         db.query(DoctorProfile, User)
         .join(User, DoctorProfile.user_id == User.id)
+        .filter(
+            User.role == "doctor",
+            User.is_active.is_(True),
+            User.approval_status == "approved",
+        )
         .order_by(User.full_name)
         .all()
     )
     return [
         DoctorDirectoryEntry(
             id=profile.id,
+            user_id=doctor.id,
             full_name=doctor.full_name,
             specialization=profile.specialization,
             clinic_name=profile.clinic_name,
@@ -87,7 +93,12 @@ def get_doctor(
     row = (
         db.query(DoctorProfile, User)
         .join(User, DoctorProfile.user_id == User.id)
-        .filter(DoctorProfile.id == doctor_id)
+        .filter(
+            DoctorProfile.id == doctor_id,
+            User.role == "doctor",
+            User.is_active.is_(True),
+            User.approval_status == "approved",
+        )
         .first()
     )
     if row is None:
@@ -96,6 +107,7 @@ def get_doctor(
     profile, doctor = row
     return DoctorDirectoryEntry(
         id=profile.id,
+        user_id=doctor.id,
         full_name=doctor.full_name,
         specialization=profile.specialization,
         clinic_name=profile.clinic_name,

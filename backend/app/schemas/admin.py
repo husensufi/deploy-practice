@@ -30,6 +30,9 @@ class AdminDashboardSummary(BaseModel):
     pending_appointments: int
     accepted_appointments: int
     rejected_appointments: int
+    cancelled_appointments: int
+    completed_appointments: int
+    rescheduled_appointments: int
     recent_patient_registrations: list[dict]
     recent_approved_doctors: list[dict]
     pending_doctor_alerts: list[dict]

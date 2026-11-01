@@ -4,7 +4,7 @@ from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.legacy import User, hash_password
+from app.core.legacy import Appointment, User, hash_password
 
 
 def ensure_user_schema(db: Session) -> None:
@@ -25,6 +25,32 @@ def ensure_user_schema(db: Session) -> None:
     for column_name, ddl in additions:
         if column_name not in columns:
             db.execute(text(f"ALTER TABLE users ADD COLUMN {column_name} {ddl}"))
+    db.commit()
+
+
+def ensure_appointment_schema(db: Session) -> None:
+    """Add appointment workflow columns/index without replacing existing records."""
+    Appointment.__table__.create(bind=db.get_bind(), checkfirst=True)
+    inspector = inspect(db.bind)
+    columns = {column["name"] for column in inspector.get_columns("appointments")}
+    additions = [
+        ("reschedule_date", "DATE"),
+        ("reschedule_time", "VARCHAR(5)"),
+        ("reschedule_requested_by", "VARCHAR(20)"),
+        ("reassignment_requested", "BOOLEAN NOT NULL DEFAULT 0"),
+    ]
+    for column_name, ddl in additions:
+        if column_name not in columns:
+            db.execute(text(f"ALTER TABLE appointments ADD COLUMN {column_name} {ddl}"))
+
+    db.execute(text("DROP INDEX IF EXISTS uq_appointments_doctor_slot_active"))
+    db.execute(
+        text(
+            "CREATE UNIQUE INDEX uq_appointments_doctor_slot_active "
+            "ON appointments (doctor_id, appointment_date, preferred_time) "
+            "WHERE status IN ('pending', 'accepted', 'rescheduled')"
+        )
+    )
     db.commit()
 
 

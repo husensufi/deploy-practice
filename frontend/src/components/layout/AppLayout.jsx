@@ -34,6 +34,7 @@ export default function AppLayout() {
               <NavLink to="/admin">Doctors</NavLink>
               <NavLink to="/admin">Approvals</NavLink>
               <NavLink to="/admin">Reports</NavLink>
+              <NavLink to="/admin/appointments">Appointments</NavLink>
             </>
           ) : (
             <>
@@ -45,11 +46,16 @@ export default function AppLayout() {
                   <NavLink to="/tracker">Daily tracker</NavLink>
                   <NavLink to="/reports">Reports</NavLink>
                   <NavLink to="/doctors">Doctors</NavLink>
-                  <NavLink to="/movement">Yoga &amp; movement</NavLink>
-                  <NavLink to="/games">Games</NavLink>
+                  <NavLink to="/appointments">Appointments</NavLink>
+                  <NavLink to="/movement">Wellness</NavLink>
                 </>
               )}
-              {user?.role === "doctor" && <NavLink to="/doctor/profile">Clinic profile</NavLink>}
+              {user?.role === "doctor" && (
+                <>
+                  <NavLink to="/doctor/profile">Clinic profile</NavLink>
+                  <NavLink to="/doctor/appointments">Appointments</NavLink>
+                </>
+              )}
             </>
           )}
           <button type="button" className="nav-logout" onClick={handleLogout}>

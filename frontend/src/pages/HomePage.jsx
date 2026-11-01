@@ -74,6 +74,11 @@ function PatientDashboard() {
           <Link className="text-link" to="/doctors">Explore doctors</Link>
         </article>
         <article className="summary-card">
+          <h2>Appointments</h2>
+          <p className="muted">Request a visit with an approved doctor or check appointment updates.</p>
+          <Link className="text-link" to="/appointments">View appointments</Link>
+        </article>
+        <article className="summary-card">
           <h2>Yoga &amp; movement</h2>
           <p className="muted">Browse the original gentle yoga poses and guided breathing session.</p>
           <Link className="text-link" to="/movement">Explore tutorials</Link>
@@ -84,7 +89,100 @@ function PatientDashboard() {
           <Link className="text-link" to="/games">Play a game</Link>
         </article>
       </section>
+      <PatientAIWorkspace />
     </>
+  );
+}
+
+function PatientAIWorkspace() {
+  const [prompt, setPrompt] = useState("Summarize my recent health trends and next steps.");
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function requestInsight(endpoint, payload) {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await apiRequest(endpoint, {
+        method: "POST",
+        data: payload,
+      });
+      setAnswer(response.summary || response.recommendations || response.answer || "No insight returned.");
+    } catch (requestError) {
+      setError(requestError?.response?.data?.detail || "Could not load the AI insight.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section className="summary-card">
+      <h2>AI Health Assistant</h2>
+      <label className="form-field">
+        Ask for health insights
+        <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} />
+      </label>
+      <div style={{ display: "flex", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
+        <button className="button button-primary" type="button" disabled={loading} onClick={() => requestInsight("/ai/patient/health-insights", { prompt })}>
+          Health insights
+        </button>
+        <button className="button button-secondary" type="button" disabled={loading} onClick={() => requestInsight("/ai/patient/wellness-recommendations", { goal: prompt })}>
+          Wellness plan
+        </button>
+        <button className="button button-secondary" type="button" disabled={loading} onClick={() => requestInsight("/ai/patient/reports/summarize", { prompt })}>
+          Report summary
+        </button>
+      </div>
+      {error && <p className="page-error" role="alert">{error}</p>}
+      {answer && <p style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>{answer}</p>}
+    </section>
+  );
+}
+
+function DoctorAIWorkspace() {
+  const [prompt, setPrompt] = useState("Summarize the patient context and recent trends for my review.");
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function requestInsight(endpoint, payload) {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await apiRequest(endpoint, {
+        method: "POST",
+        data: payload,
+      });
+      setAnswer(response.summary || response.answer || "No insight returned.");
+    } catch (requestError) {
+      setError(requestError?.response?.data?.detail || "Could not load the doctor AI insight.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <section className="summary-card">
+      <h2>AI Doctor Assistant</h2>
+      <label className="form-field">
+        Consultation prompt
+        <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={3} />
+      </label>
+      <div style={{ display: "flex", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
+        <button className="button button-primary" type="button" disabled={loading} onClick={() => requestInsight("/ai/doctor/consultation-assistant", { prompt })}>
+          Consultation AI
+        </button>
+        <button className="button button-secondary" type="button" disabled={loading} onClick={() => requestInsight("/ai/doctor/reports/summarize", { prompt })}>
+          Report summary
+        </button>
+        <button className="button button-secondary" type="button" disabled={loading} onClick={() => requestInsight("/ai/doctor/patients/1/summary", { prompt })}>
+          Patient summary
+        </button>
+      </div>
+      {error && <p className="page-error" role="alert">{error}</p>}
+      {answer && <p style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>{answer}</p>}
+    </section>
   );
 }
 
@@ -120,6 +218,12 @@ function DoctorDashboard() {
           {data ? "Edit clinic profile" : "Complete clinic profile"}
         </Link>
       </article>
+      <article className="summary-card">
+        <h2>Appointment requests</h2>
+        <p className="muted">Review incoming patient requests and manage your appointment schedule.</p>
+        <Link className="text-link" to="/doctor/appointments">Manage appointments</Link>
+      </article>
+      <DoctorAIWorkspace />
     </>
   );
 }
@@ -219,6 +323,19 @@ function AdminDashboard() {
         <article className="summary-card"><h2>Pending approvals</h2><p>{data.pending_doctor_approvals}</p></article>
         <article className="summary-card"><h2>Rejected</h2><p>{data.rejected_doctors}</p></article>
         <article className="summary-card"><h2>Active doctors</h2><p>{data.active_doctors}</p></article>
+      </section>
+      <section className="summary-card admin-appointment-summary">
+        <h2>Appointment overview</h2>
+        <div className="appointment-metrics">
+          <p>Total: <strong>{data.total_appointments}</strong></p>
+          <p>Pending: <strong>{data.pending_appointments}</strong></p>
+          <p>Accepted: <strong>{data.accepted_appointments}</strong></p>
+          <p>Rejected: <strong>{data.rejected_appointments}</strong></p>
+          <p>Cancelled: <strong>{data.cancelled_appointments}</strong></p>
+          <p>Completed: <strong>{data.completed_appointments}</strong></p>
+          <p>Rescheduled: <strong>{data.rescheduled_appointments}</strong></p>
+        </div>
+        <Link className="button button-primary" to="/admin/appointments">Manage appointments</Link>
       </section>
       <section className="summary-card">
         <h2>Recent patient registrations</h2>

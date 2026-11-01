@@ -28,7 +28,7 @@ describe("GynoBuddyWidget", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
-      expect(apiRequest).toHaveBeenCalledWith("/chat/reply", {
+      expect(apiRequest).toHaveBeenCalledWith("/ai/patient/gynobuddy/chat", {
         method: "POST",
         data: {
           messages: [{ role: "user", content: "What is PCOS?" }],
@@ -48,7 +48,7 @@ describe("GynoBuddyWidget", () => {
     fireEvent.keyDown(composer, { key: "Enter" });
 
     await waitFor(() => {
-      expect(apiRequest).toHaveBeenCalledWith("/chat/reply", {
+      expect(apiRequest).toHaveBeenCalledWith("/ai/patient/gynobuddy/chat", {
         method: "POST",
         data: {
           messages: [{ role: "user", content: "Tell me about PCOS" }],

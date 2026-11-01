@@ -1,32 +1,4 @@
-"""
-chatbot.py
-----------
-GynoBuddy — a real AI chatbot, not a fixed set of canned answers.
-
-Every reply here is generated fresh by an actual language model (Claude,
-via the Anthropic API), based on the full conversation so far. That's
-what makes it give different, context-aware answers instead of
-repeating the same 4-5 lines.
-
-SETUP REQUIRED (this is not optional — there is no way around it):
-    1. Go to https://console.anthropic.com and create a free account.
-    2. Generate an API key.
-    3. Copy .env.example to a new file named ".env" in this same folder.
-    4. Paste your key in there: ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
-    5. Restart the server.
-
-Without this key, the chatbot will politely tell the user it isn't
-connected yet — it will NOT pretend to work with fake responses.
-"""
-
-import os
-from dotenv import load_dotenv
-import anthropic
-
-load_dotenv()
-
-_api_key = os.getenv("ANTHROPIC_API_KEY")
-_client = anthropic.Anthropic(api_key=_api_key) if _api_key else None
+from backend.ai import azure_openai
 
 # This system prompt is what makes GynoBuddy's personality and safety
 # rules consistent across every message, while still letting each
@@ -56,25 +28,13 @@ Rules you always follow:
 """
 
 
-def get_ai_reply(conversation_history: list) -> str:
+def get_ai_reply(conversation_history: list) -> str | None:
     """
     conversation_history: a list of {"role": "user" | "assistant", "content": "..."}
     Returns the AI's next reply as a plain string.
     """
-    if not _client:
-        return (
-            "⚠️ GynoBuddy isn't connected yet. Add your ANTHROPIC_API_KEY "
-            "to a .env file in the project folder (see .env.example) and "
-            "restart the server to activate real AI replies."
-        )
-
-    try:
-        response = _client.messages.create(
-            model="claude-sonnet-5",
-            max_tokens=400,
-            system=SYSTEM_PROMPT,
-            messages=conversation_history,
-        )
-        return response.content[0].text
-    except Exception as e:
-        return f"Sorry, I couldn't reach GynoBuddy right now. ({str(e)})"
+    reply = azure_openai.create_chat_completion(
+        [{"role": "system", "content": SYSTEM_PROMPT}, *conversation_history],
+        max_tokens=400,
+    )
+    return reply.strip() if reply else None

@@ -1,19 +1,21 @@
 from dataclasses import replace
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
+from openai import AuthenticationError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.websockets import WebSocketDisconnect
 
 from app.core import security
-from app.api.v1.routes import chat as chat_routes
 from app.api.v1.routes import chat_websocket as websocket_routes
 from app.core.config import settings
 from app.core.legacy import User
 from app.database.session import get_db
 from app.main import app
+from backend.ai import azure_openai
 
 
 @pytest.fixture
@@ -201,40 +203,35 @@ def test_chat_uses_configured_azure_openai_and_requires_authentication(
 
     register(client)
     monkeypatch.setattr(
-        chat_routes,
+        azure_openai,
         "settings",
         replace(
-            settings,
-            azure_openai_endpoint="https://example.openai.azure.com",
-            azure_openai_api_key="test-key",
-            azure_openai_deployment="test-deployment",
-            azure_openai_api_version="2024-10-21",
+            azure_openai.settings,
+            endpoint="https://example.openai.azure.com",
+            api_key="test-key",
+            deployment="test-deployment",
+            api_version="2024-10-21",
         ),
     )
     request_arguments = {}
 
-    class FakeAzureOpenAI:
-        def __init__(self, **kwargs):
-            self.chat = type(
-                "Chat",
-                (),
-                {
-                    "completions": type(
-                        "Completions",
-                        (),
-                        {"create": self.create_completion},
-                    )(),
-                },
-            )()
-            request_arguments["client"] = kwargs
+    class FakeClient:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kwargs):
+                    request_arguments["completion"] = kwargs
+                    message = type(
+                        "Message", (), {"content": "PCOS varies by person."}
+                    )()
+                    choice = type("Choice", (), {"message": message})()
+                    return type("Completion", (), {"choices": [choice]})()
 
-        def create_completion(self, **kwargs):
-            request_arguments["completion"] = kwargs
-            message = type("Message", (), {"content": "PCOS varies by person."})()
-            choice = type("Choice", (), {"message": message})()
-            return type("Completion", (), {"choices": [choice]})()
+    def create_client(endpoint, api_key, api_version):
+        request_arguments["client"] = (endpoint, api_key, api_version)
+        return FakeClient()
 
-    monkeypatch.setattr(chat_routes, "AzureOpenAI", FakeAzureOpenAI)
+    monkeypatch.setattr(azure_openai, "_create_client", create_client)
     response = client.post(
         "/api/v1/chat/reply",
         json={
@@ -250,16 +247,70 @@ def test_chat_uses_configured_azure_openai_and_requires_authentication(
     assert response.json() == {"reply": "PCOS varies by person."}
     assert request_arguments["completion"]["model"] == "test-deployment"
     assert request_arguments["completion"]["messages"][1]["content"] == "What is PCOS?"
+    assert request_arguments["client"] == (
+        "https://example.openai.azure.com",
+        "test-key",
+        "2024-10-21",
+    )
 
 
-def test_chat_reports_missing_azure_configuration(client: TestClient) -> None:
+def test_chat_reports_missing_azure_configuration(
+    client: TestClient,
+    monkeypatch,
+) -> None:
     register(client)
+    monkeypatch.setattr(
+        azure_openai,
+        "settings",
+        replace(
+            azure_openai.settings,
+            endpoint=None,
+            api_key=None,
+            deployment=None,
+        ),
+    )
     response = client.post(
         "/api/v1/chat/reply",
         json={"messages": [{"role": "user", "content": "What is PCOS?"}]},
     )
     assert response.status_code == 503
-    assert response.json()["detail"].startswith("GynoBuddy is not configured.")
+    assert "AZURE_OPENAI_ENDPOINT" in response.json()["detail"]
+    assert "AZURE_OPENAI_API_KEY" in response.json()["detail"]
+    assert "AZURE_OPENAI_DEPLOYMENT" in response.json()["detail"]
+
+
+def test_chat_reports_rejected_azure_credentials(
+    client: TestClient,
+    monkeypatch,
+) -> None:
+    register(client)
+    error_response = httpx.Response(
+        401,
+        request=httpx.Request(
+            "POST",
+            "https://example.openai.azure.com/openai/deployments/test/chat/completions",
+        ),
+    )
+    authentication_error = AuthenticationError(
+        "Invalid API key",
+        response=error_response,
+        body={"error": "invalid_api_key"},
+    )
+
+    def reject_credentials(messages, *, max_tokens):
+        assert messages
+        assert max_tokens == 400
+        raise authentication_error
+
+    monkeypatch.setattr(azure_openai, "create_chat_completion", reject_credentials)
+    response = client.post(
+        "/api/v1/chat/reply",
+        json={"messages": [{"role": "user", "content": "What is PCOS?"}]},
+    )
+
+    assert response.status_code == 502
+    assert "rejected the configured credentials" in response.json()["detail"]
+    assert "Invalid API key" not in response.json()["detail"]
 
 
 def test_connection_and_care_alert_workflow(client: TestClient) -> None:

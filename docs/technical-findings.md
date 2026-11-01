@@ -11,7 +11,7 @@
 7. **HTML-first handlers:** most feature handlers return templates or redirects. The target frontend needs JSON schemas and API routes, while preserving the original field behavior and redirects where appropriate.
 8. **Data model limitations:** `PCOSProfile` is one-to-one with user and overwritten on submit; there is no assessment history. The `daily_logs` table has no unique database constraint for `(user_id, log_date)` although the route upserts by that pair.
 9. **Consent model absent:** doctor profiles are public in the directory, but there are no patient report-sharing grants or authorized patient-record routes. Do not expose clinical records to doctors or their chatbot without designing consent and access controls.
-10. **Two chatbot integrations remain:** `backend/legacy/chatbot.py` uses Anthropic; the React application uses Azure OpenAI through the new API. The legacy adapter still needs migration before Anthropic can be removed.
+10. **Chat provider configuration is centralized:** both the retained legacy chatbot and React API use the shared Azure OpenAI service and configured deployment; provider credentials remain backend-only.
 11. **Error handling and logging:** the WebSocket broadcast and optional ML estimation paths catch broad exceptions; the chatbot also catches broadly. Tighten error handling during the migration without silently converting operational failures to success.
 12. **Migration test coverage:** API workflow and React UI tests cover migrated flows; remaining legacy/ML paths need ongoing regression coverage.
 13. **Page/UI limitations:** the home page is a welcome shell rather than the data-driven dashboard described in the target. Several pages share navigation; game pages contain inline scripts and load Three.js from a CDN. There is no doctor-specific dashboard today.
@@ -26,7 +26,7 @@
 4. Add API/auth schemas and services, extracting existing score/tracker/report logic rather than rewriting the rules.
 5. Establish API and WebSocket ownership checks before moving any patient data into new endpoints.
 6. Migrate frontend feature groups from auth and dashboard into assessment/tracker/reports, then doctors/social, games/yoga/i18n.
-7. Replace Anthropic with Azure OpenAI behind an explicit service boundary. Use configured Azure deployment and return clear errors if configuration or service availability is missing.
+7. Keep Azure OpenAI behind the shared service boundary, use the configured deployment, and return clear errors when configuration or service availability is missing.
 8. Add automated tests per migrated feature and compare the old and new workflows before switching users to React.
 9. Complete setup, API, database, architecture, Azure, and operational documentation after the migrated application passes tests.
 

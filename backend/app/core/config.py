@@ -36,10 +36,6 @@ class Settings:
     environment: str
     secret_key: str | None
     frontend_url: str
-    azure_openai_endpoint: str | None
-    azure_openai_api_key: str | None
-    azure_openai_deployment: str | None
-    azure_openai_api_version: str | None
 
 
 settings = Settings(
@@ -47,8 +43,4 @@ settings = Settings(
     environment=os.getenv("ENVIRONMENT", "development"),
     secret_key=os.getenv("SECRET_KEY"),
     frontend_url=os.getenv("FRONTEND_URL", "http://localhost:5173"),
-    azure_openai_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_openai_api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    azure_openai_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
-    azure_openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
 )

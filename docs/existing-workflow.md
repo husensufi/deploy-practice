@@ -59,7 +59,7 @@ The present route does not implement delete or arbitrary-date create/update oper
 
 - `/chatbot` presents a browser-based chat panel.
 - The browser sends the conversation history to `POST /api/chatbot`.
-- `backend/legacy/chatbot.py` forwards it to Anthropic when configured; without a key, it returns an explicit not-connected message.
+- `backend/legacy/chatbot.py` forwards it through the shared backend Azure OpenAI service; without configuration, it returns an explicit not-configured message.
 - Chatbot history currently exists only in browser memory and is not persisted.
 
 ### Games, yoga, and language

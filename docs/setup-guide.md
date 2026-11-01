@@ -49,7 +49,7 @@ python -m pip install -r backend\legacy\requirements.txt
 uvicorn backend.legacy.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open <http://localhost:8000>. It uses the same original SQLite database, legacy Jinja templates in the frontend tree, and assets under `frontend/public/static`. Run either the legacy app or the API on port 8000 at a time. The legacy chatbot uses an optional Anthropic key in the root `.env`; the React chatbot uses Azure OpenAI variables in `backend/.env`.
+Open <http://localhost:8000>. It uses the same original SQLite database, legacy Jinja templates in the frontend tree, and assets under `frontend/public/static`. Run either the legacy app or the API on port 8000 at a time. Both chat interfaces use the same optional Azure OpenAI configuration in `backend/.env`; set the endpoint, key, deployment, and API version (`2024-10-21` by default).
 
 ## Tests and build
 
@@ -81,4 +81,4 @@ Model artifacts and reports are generated under `backend/models/`. No dataset or
 
 ## AI configuration
 
-The React app uses Azure OpenAI credentials in `backend/.env`. The retained legacy chatbot still expects `ANTHROPIC_API_KEY` in the root `.env`. Neither provider key belongs in frontend environment variables or source control. The legacy AI adapter has not yet been replaced.
+The React app and retained legacy chatbot share the Azure OpenAI service and credentials in `backend/.env`. The provider client is initialized centrally in `backend/ai/azure_openai.py`; the configured deployment is used for every chat request. Do not put credentials in frontend environment files or source control. If required settings are missing or invalid, the chatbot reports an explicit configuration/service error.

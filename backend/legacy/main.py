@@ -27,6 +27,8 @@ Routes added in Part 2:
     POST /tracker            -> save a daily log entry
 """
 
+import logging
+
 from fastapi import FastAPI, Request, Depends, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -46,9 +48,12 @@ from .detection import run_pcos_screening
 from .charts import generate_all_charts
 from .pdf_report import build_pdf_report
 from .chatbot import get_ai_reply
+from backend.ai.azure_openai import AzureOpenAIConfigurationError
+from openai import APIError, AuthenticationError
 from pydantic import BaseModel
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+logger = logging.getLogger(__name__)
 FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 STATIC_ROOT = FRONTEND_ROOT / "public" / "static"
 TEMPLATE_ROOT = FRONTEND_ROOT / "legacy_templates"
@@ -757,7 +762,31 @@ def chatbot_api(request: Request, body: ChatbotRequest, db: Session = Depends(ge
     if not user:
         return JSONResponse(status_code=401, content={"reply": "Please log in again."})
 
-    reply = get_ai_reply(body.history)
+    try:
+        reply = get_ai_reply(body.history)
+    except AzureOpenAIConfigurationError as exc:
+        return JSONResponse(status_code=503, content={"reply": str(exc)})
+    except AuthenticationError:
+        logger.exception("Azure OpenAI rejected the configured credentials")
+        return JSONResponse(
+            status_code=502,
+            content={
+                "reply": "Azure OpenAI rejected its configured credentials. Contact the app administrator."
+            },
+        )
+    except APIError:
+        logger.exception("Azure OpenAI request failed for the legacy chatbot")
+        return JSONResponse(
+            status_code=502,
+            content={"reply": "Sorry, I couldn't reach GynoBuddy right now. Please try again."},
+        )
+
+    if not reply:
+        logger.error("Azure OpenAI returned an empty legacy chatbot response")
+        return JSONResponse(
+            status_code=502,
+            content={"reply": "GynoBuddy returned an empty response. Please try again."},
+        )
     return JSONResponse(content={"reply": reply})
 
 

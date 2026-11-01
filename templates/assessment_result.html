@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="result_title">Your Screening Result</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/home" data-i18n="nav_home">Home</a>
+        <a href="/tracker" data-i18n="nav_tracker">Daily Tracker</a>
+        <a href="/assessment" data-i18n="nav_assessment">Assessment</a>
+        <a href="/reports" data-i18n="nav_reports">Reports</a>
+        <a href="/doctors" data-i18n="nav_doctors">Doctors</a>
+        {% if user.role == 'doctor' %}<a href="/doctor/profile" data-i18n="my_clinic_profile">My Clinic Profile</a>{% endif %}
+        <a href="/yoga" data-i18n="nav_yoga">Yoga & Exercise</a>
+        <a href="/games" data-i18n="nav_games">Games</a>
+        <a href="/chatbot" data-i18n="nav_chatbot">GynoBuddy AI</a>
+        <a href="/connections" data-i18n="nav_friends">Friends & Family</a>
+        <div class="lang-switch" style="margin-bottom:0;">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">HI</button>
+          <button class="lang-btn" data-lang="kn">KN</button>
+        </div>
+        <a href="/logout" data-i18n="nav_logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel">
+
+      <div class="result-card risk-{{ result.risk_level|lower }}">
+        <span class="badge" data-i18n="result_badge">Screening Result</span>
+        <h2 style="margin-top:12px;">
+          {{ result.risk_level }} <span data-i18n="likelihood">likelihood</span>
+        </h2>
+        <p style="margin-top:8px; opacity:0.9;">
+          <span data-i18n="score_label">Score</span>: {{ result.score }} / {{ result.max_score }}
+          &nbsp;·&nbsp; BMI: {{ result.bmi }}
+        </p>
+        <p style="margin-top:16px; max-width:560px; line-height:1.5;">{{ result.message }}</p>
+        {% if result.ml_probability is not none %}
+        <p style="margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.3);">
+          🤖 <span data-i18n="ml_estimate">Machine-learning model estimate</span>:
+          <strong>{{ (result.ml_probability * 100)|round(0)|int }}%</strong>
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="disclaimer-box">
+        ⚕️ <span data-i18n="disclaimer_text">
+        This tool provides a self-assessment screening indicator only,
+        based on commonly reported PCOS symptoms. It is NOT a medical
+        diagnosis. A confirmed PCOS diagnosis requires clinical evaluation
+        by a gynecologist, including blood hormone tests and a pelvic
+        ultrasound.</span>
+      </div>
+
+      <div style="margin-top:24px; display:flex; gap:12px;">
+        <a href="/assessment" class="btn-secondary-link" data-i18n="retake">Update My Answers</a>
+        <a href="/tracker" class="btn-secondary-link" data-i18n="go_to_tracker">Go to Daily Tracker</a>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

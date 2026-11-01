@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Ashwini Asangi PCOS GynoCare</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="auth-shell">
+
+    <div class="auth-visual">
+      <div class="cycle-ring"></div>
+      <h1 data-i18n="tagline">Your Personal PCOS Care Companion</h1>
+      <p>Create your account in under a minute. Your data stays private —
+         only you decide which doctor or family member gets to see it.</p>
+    </div>
+
+    <div class="auth-form-side">
+      <div class="auth-card">
+
+        <div class="brand-row">
+          <div class="brand-mark"></div>
+          <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+        </div>
+
+        <div class="lang-switch">
+          <button class="lang-btn" data-lang="en">English</button>
+          <button class="lang-btn" data-lang="hi">हिंदी</button>
+          <button class="lang-btn" data-lang="kn">ಕನ್ನಡ</button>
+        </div>
+
+        <h2 data-i18n="signup_title">Create Your Account</h2>
+
+        {% if error %}
+        <div class="auth-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/signup">
+
+          <div class="field">
+            <label data-i18n="role_label">I am a</label>
+            <div class="role-toggle">
+              <label>
+                <input type="radio" name="role" value="patient" checked>
+                <span data-i18n="role_patient">Patient</span>
+              </label>
+              <label>
+                <input type="radio" name="role" value="doctor">
+                <span data-i18n="role_doctor">Doctor</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label data-i18n="full_name">Full Name</label>
+            <input type="text" name="full_name" required placeholder="Your name">
+          </div>
+          <div class="field">
+            <label data-i18n="email">Email Address</label>
+            <input type="email" name="email" required placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label data-i18n="mobile">Mobile Number</label>
+            <input type="tel" name="mobile" required placeholder="+91 9XXXXXXXXX">
+          </div>
+          <div class="field">
+            <label data-i18n="password">Password</label>
+            <input type="password" name="password" required placeholder="••••••••">
+          </div>
+          <div class="field">
+            <label data-i18n="confirm_password">Confirm Password</label>
+            <input type="password" name="confirm_password" required placeholder="••••••••">
+          </div>
+
+          <button type="submit" class="btn-primary" data-i18n="signup_button">Sign Up</button>
+        </form>
+
+        <div class="auth-links">
+          <span data-i18n="have_account">Already have an account?</span>
+          <a href="/login" data-i18n="login_now">Login Now</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

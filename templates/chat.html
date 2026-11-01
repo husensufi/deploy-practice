@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat — {{ friend.full_name }}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/connections" data-i18n="nav_friends">← Friends & Family</a>
+        <div class="lang-switch" style="margin-bottom:0;">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">HI</button>
+          <button class="lang-btn" data-lang="kn">KN</button>
+        </div>
+        <a href="/logout" data-i18n="nav_logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 700px;">
+      <h2>{{ friend.full_name }}</h2>
+
+      <div class="chat-window" id="chat-window">
+        {% for msg in messages %}
+        <div class="chat-bubble {{ 'mine' if msg.sender_id == user.id else 'theirs' }} {{ 'care-alert' if msg.message_type == 'care_alert' else '' }}">
+          <div class="chat-text">{{ msg.content }}</div>
+          <div class="chat-time">{{ msg.created_at.strftime('%I:%M %p') }}</div>
+        </div>
+        {% else %}
+        <p style="text-align:center; color:#6E5F6C;" data-i18n="no_messages">No messages yet. Say hello!</p>
+        {% endfor %}
+      </div>
+
+      <form id="chat-form" class="chat-input-row">
+        <input type="text" id="chat-input" data-i18n="type_message" placeholder="Type a message..." autocomplete="off">
+        <button type="submit" class="btn-primary" style="width:auto; padding:12px 22px;" data-i18n="send">Send</button>
+      </form>
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+  <script>
+    const currentUserId = {{ user.id }};
+    const friendId = {{ friend.id }};
+    const chatWindow = document.getElementById("chat-window");
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+
+    // Scroll to the latest message on load
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+    const socket = new WebSocket(`${wsProtocol}${window.location.host}/ws/chat/${friendId}`);
+
+    function appendMessage(data) {
+      const bubble = document.createElement("div");
+      const mine = data.sender_id === currentUserId;
+      bubble.className = "chat-bubble " + (mine ? "mine" : "theirs") +
+        (data.message_type === "care_alert" ? " care-alert" : "");
+      bubble.innerHTML = `<div class="chat-text"></div><div class="chat-time"></div>`;
+      bubble.querySelector(".chat-text").textContent = data.content;
+      bubble.querySelector(".chat-time").textContent = data.time;
+      chatWindow.appendChild(bubble);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      appendMessage(data);
+    };
+
+    socket.onclose = () => {
+      console.log("Chat connection closed.");
+    };
+
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+      socket.send(JSON.stringify({ content: text }));
+      chatInput.value = "";
+    });
+  </script>
+</body>
+</html>

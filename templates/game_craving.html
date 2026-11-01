@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guess My Craving</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    #craving-box {
+      max-width: 600px; margin: 24px auto 0;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 36px; text-align: center;
+    }
+    #craving-question { font-family: 'Fraunces', serif; font-size: 1.35rem; color: var(--plum); margin-bottom: 24px; }
+    .craving-options { display: flex; flex-direction: column; gap: 12px; }
+    .craving-btn {
+      padding: 13px; border-radius: 10px; border: 1.5px solid var(--border);
+      background: #fff; cursor: pointer; font-size: 0.95rem; font-family: inherit;
+      transition: all .15s ease;
+    }
+    .craving-btn:hover { border-color: var(--rose); background: var(--rose-soft); }
+    #craving-reveal { display: none; }
+    #craving-emoji { font-size: 3.5rem; margin-bottom: 10px; }
+    #craving-result { font-family: 'Fraunces', serif; font-size: 1.6rem; color: var(--plum); margin-bottom: 10px; }
+    #craving-restart { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/games">← Games</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 700px;">
+      <h2>🔮 Guess My Craving</h2>
+      <p style="color:#6E5F6C; margin-top:4px;">Answer a few playful questions — let's see if we guess right.</p>
+
+      <div id="craving-box">
+        <div id="craving-question-view">
+          <p id="craving-question"></p>
+          <div class="craving-options" id="craving-options"></div>
+        </div>
+
+        <div id="craving-reveal">
+          <div id="craving-emoji"></div>
+          <div id="craving-result"></div>
+          <p id="craving-note" style="color:#6E5F6C;"></p>
+          <button class="btn-primary" id="craving-restart" style="width:auto; padding:10px 24px;">Play Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // A small branching decision tree. Each node is either a question
+    // (with options pointing to the next node) or a final result.
+    const tree = {
+      start: {
+        question: "Sweet or savory right now?",
+        options: [
+          { label: "Sweet 🍯", next: "sweet1" },
+          { label: "Savory 🧂", next: "savory1" },
+        ],
+      },
+      sweet1: {
+        question: "Warm or cold?",
+        options: [
+          { label: "Warm", next: "sweet_warm" },
+          { label: "Cold", next: "sweet_cold" },
+        ],
+      },
+      sweet_warm: {
+        question: "Do you want something with chocolate?",
+        options: [
+          { label: "Yes please", result: { emoji: "🍫", name: "A square of dark chocolate", note: "A little dark chocolate can be a genuinely comforting, lower-sugar sweet fix." } },
+          { label: "Not today", result: { emoji: "🍵", name: "Warm masala chai with jaggery", note: "Cosy, spiced, and gentle on you." } },
+        ],
+      },
+      sweet_cold: {
+        question: "Fruity or creamy?",
+        options: [
+          { label: "Fruity", result: { emoji: "🍉", name: "A bowl of chilled fruit chaat", note: "Naturally sweet and refreshing." } },
+          { label: "Creamy", result: { emoji: "🍨", name: "A small scoop of ice cream", note: "Totally fine in moderation — enjoy it without guilt." } },
+        ],
+      },
+      savory1: {
+        question: "Crunchy or soft & comforting?",
+        options: [
+          { label: "Crunchy", next: "savory_crunchy" },
+          { label: "Soft & comforting", next: "savory_soft" },
+        ],
+      },
+      savory_crunchy: {
+        question: "Spicy or mild?",
+        options: [
+          { label: "Spicy", result: { emoji: "🌶️", name: "Roasted masala makhana", note: "Crunchy, spiced, and much lighter than fried chips." } },
+          { label: "Mild", result: { emoji: "🥜", name: "A handful of roasted nuts & seeds", note: "Great steady energy without a sugar crash." } },
+        ],
+      },
+      savory_soft: {
+        question: "Do you want it home-style?",
+        options: [
+          { label: "Yes, comfort food", result: { emoji: "🍲", name: "Warm khichdi or dal", note: "Simple, warm, and easy on your stomach on a low-energy day." } },
+          { label: "Something light", result: { emoji: "🥗", name: "A fresh veggie salad bowl", note: "Light but still satisfying." } },
+        ],
+      },
+    };
+
+    let current = "start";
+    const questionView = document.getElementById("craving-question-view");
+    const revealView = document.getElementById("craving-reveal");
+    const questionEl = document.getElementById("craving-question");
+    const optionsEl = document.getElementById("craving-options");
+
+    function render() {
+      const node = tree[current];
+      questionEl.textContent = node.question;
+      optionsEl.innerHTML = "";
+      node.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "craving-btn";
+        btn.textContent = opt.label;
+        btn.addEventListener("click", () => {
+          if (opt.result) {
+            showResult(opt.result);
+          } else {
+            current = opt.next;
+            render();
+          }
+        });
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function showResult(result) {
+      questionView.style.display = "none";
+      revealView.style.display = "block";
+      document.getElementById("craving-emoji").textContent = result.emoji;
+      document.getElementById("craving-result").textContent = result.name;
+      document.getElementById("craving-note").textContent = result.note;
+    }
+
+    document.getElementById("craving-restart").addEventListener("click", () => {
+      current = "start";
+      revealView.style.display = "none";
+      questionView.style.display = "block";
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

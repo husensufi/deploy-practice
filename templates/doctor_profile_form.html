@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="my_clinic_profile">My Clinic Profile</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/home" data-i18n="nav_home">Home</a>
+        <a href="/doctors" data-i18n="nav_doctors">Doctors</a>
+        <a href="/doctor/profile" data-i18n="my_clinic_profile">My Clinic Profile</a>
+        <a href="/yoga" data-i18n="nav_yoga">Yoga & Exercise</a>
+        <a href="/games" data-i18n="nav_games">Games</a>
+        <a href="/chatbot" data-i18n="nav_chatbot">GynoBuddy AI</a>
+        <a href="/connections" data-i18n="nav_friends">Friends & Family</a>
+        <div class="lang-switch" style="margin-bottom:0;">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">HI</button>
+          <button class="lang-btn" data-lang="kn">KN</button>
+        </div>
+        <a href="/logout" data-i18n="nav_logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel">
+      <h2 data-i18n="my_clinic_profile">My Clinic Profile</h2>
+      <p style="color:#6E5F6C; margin-top:4px;" data-i18n="doctor_form_subtitle">
+        This information appears in the public Doctors directory for patients to find you.
+      </p>
+
+      <form method="post" action="/doctor/profile" class="form-card">
+
+        <div class="field">
+          <label data-i18n="clinic_name">Clinic / Hospital Name</label>
+          <input type="text" name="clinic_name" required value="{{ profile.clinic_name if profile else '' }}">
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label data-i18n="specialization">Specialization</label>
+            <input type="text" name="specialization" value="{{ profile.specialization if profile else 'Gynecologist' }}">
+          </div>
+          <div class="field">
+            <label data-i18n="city">City</label>
+            <input type="text" name="city" required value="{{ profile.city if profile else '' }}">
+          </div>
+        </div>
+
+        <div class="field">
+          <label data-i18n="address">Full Address</label>
+          <input type="text" name="address" required value="{{ profile.address if profile else '' }}">
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label data-i18n="phone">Clinic Phone Number</label>
+            <input type="tel" name="phone" required value="{{ profile.phone if profile else '' }}">
+          </div>
+          <div class="field">
+            <label data-i18n="consultation_hours">Consultation Hours</label>
+            <input type="text" name="consultation_hours" value="{{ profile.consultation_hours if profile else 'Mon–Sat, 10 AM – 6 PM' }}">
+          </div>
+        </div>
+
+        <div class="field">
+          <label data-i18n="photo_url">Photo URL (optional)</label>
+          <input type="text" name="photo_url" placeholder="https://..." value="{{ profile.photo_url if profile and profile.photo_url else '' }}">
+        </div>
+
+        <div class="field">
+          <label data-i18n="about">About / Qualifications</label>
+          <input type="text" name="about" value="{{ profile.about if profile and profile.about else '' }}">
+        </div>
+
+        <button type="submit" class="btn-primary" data-i18n="save_profile">Save Profile</button>
+      </form>
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

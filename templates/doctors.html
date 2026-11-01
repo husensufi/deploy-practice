@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="nav_doctors">Doctors</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/home" data-i18n="nav_home">Home</a>
+        <a href="/tracker" data-i18n="nav_tracker">Daily Tracker</a>
+        <a href="/assessment" data-i18n="nav_assessment">Assessment</a>
+        <a href="/reports" data-i18n="nav_reports">Reports</a>
+        <a href="/doctors" data-i18n="nav_doctors">Doctors</a>
+        {% if user.role == 'doctor' %}
+        <a href="/doctor/profile" data-i18n="my_clinic_profile">My Clinic Profile</a>
+        {% endif %}
+        <a href="/yoga" data-i18n="nav_yoga">Yoga & Exercise</a>
+        <a href="/games" data-i18n="nav_games">Games</a>
+        <a href="/chatbot" data-i18n="nav_chatbot">GynoBuddy AI</a>
+        <a href="/connections" data-i18n="nav_friends">Friends & Family</a>
+        <div class="lang-switch" style="margin-bottom:0;">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">HI</button>
+          <button class="lang-btn" data-lang="kn">KN</button>
+        </div>
+        <a href="/logout" data-i18n="nav_logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 980px;">
+      <h2 data-i18n="doctors_title">Gynecologists Near You</h2>
+      <p style="color:#6E5F6C; margin-top:4px;" data-i18n="doctors_subtitle">
+        Doctors who have registered on Ashwini Asangi PCOS GynoCare.
+      </p>
+
+      {% if not doctors %}
+      <div class="disclaimer-box" style="margin-top:24px;" data-i18n="no_doctors_yet">
+        No doctors have registered yet. Ask your gynecologist to sign up with the "Doctor" role and fill their clinic profile.
+      </div>
+      {% else %}
+      <div class="doctor-grid">
+        {% for profile, doc_user in doctors %}
+        <div class="doctor-card">
+          <div class="doctor-photo">
+            {% if profile.photo_url %}
+              <img src="{{ profile.photo_url }}" alt="{{ doc_user.full_name }}">
+            {% else %}
+              <div class="doctor-photo-placeholder">{{ doc_user.full_name[0] }}</div>
+            {% endif %}
+          </div>
+          <div class="doctor-info">
+            <h3>Dr. {{ doc_user.full_name }}</h3>
+            <span class="badge">{{ profile.specialization }}</span>
+            <p class="doctor-clinic">{{ profile.clinic_name }}</p>
+            <p class="doctor-meta">📍 {{ profile.address }}, {{ profile.city }}</p>
+            <p class="doctor-meta">🕒 {{ profile.consultation_hours }}</p>
+            {% if profile.about %}<p class="doctor-about">{{ profile.about }}</p>{% endif %}
+            <a href="tel:{{ profile.phone }}" class="btn-secondary-link" style="margin-top:10px;">📞 {{ profile.phone }}</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

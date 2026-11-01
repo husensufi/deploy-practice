@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="nav_reports">Reports</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/home" data-i18n="nav_home">Home</a>
+        <a href="/tracker" data-i18n="nav_tracker">Daily Tracker</a>
+        <a href="/assessment" data-i18n="nav_assessment">Assessment</a>
+        <a href="/reports" data-i18n="nav_reports">Reports</a>
+        <a href="/doctors" data-i18n="nav_doctors">Doctors</a>
+        {% if user.role == 'doctor' %}<a href="/doctor/profile" data-i18n="my_clinic_profile">My Clinic Profile</a>{% endif %}
+        <a href="/yoga" data-i18n="nav_yoga">Yoga & Exercise</a>
+        <a href="/games" data-i18n="nav_games">Games</a>
+        <a href="/chatbot" data-i18n="nav_chatbot">GynoBuddy AI</a>
+        <a href="/connections" data-i18n="nav_friends">Friends & Family</a>
+        <div class="lang-switch" style="margin-bottom:0;">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">HI</button>
+          <button class="lang-btn" data-lang="kn">KN</button>
+        </div>
+        <a href="/logout" data-i18n="nav_logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 980px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 data-i18n="nav_reports">Reports</h2>
+          <p style="color:#6E5F6C; margin-top:4px;" data-i18n="reports_subtitle">
+            A visual summary of your recent tracked habits — share the PDF with your doctor.
+          </p>
+        </div>
+        <a href="/reports/pdf" class="btn-primary" style="width:auto; padding:12px 22px; text-decoration:none; display:inline-block;" data-i18n="download_pdf">
+          ⬇ Download PDF Report
+        </a>
+      </div>
+
+      {% if not profile %}
+      <div class="disclaimer-box" style="margin-top:24px;">
+        <span data-i18n="no_profile_yet">You haven't completed your PCOS Assessment yet.</span>
+        &nbsp;<a href="/assessment" data-i18n="nav_assessment">Assessment</a>
+      </div>
+      {% endif %}
+
+      {% if not charts %}
+      <div class="disclaimer-box" style="margin-top:24px;">
+        <span data-i18n="no_logs_yet">No tracker entries yet — start logging on the Daily Tracker page to see your charts here.</span>
+        &nbsp;<a href="/tracker" data-i18n="nav_tracker">Daily Tracker</a>
+      </div>
+      {% else %}
+      <div class="charts-grid">
+        <div class="chart-card">
+          <img src="{{ charts.cramp_pain }}" alt="Cramp pain trend">
+        </div>
+        <div class="chart-card">
+          <img src="{{ charts.sleep_exercise }}" alt="Sleep vs exercise">
+        </div>
+        <div class="chart-card">
+          <img src="{{ charts.water }}" alt="Water intake">
+        </div>
+        <div class="chart-card">
+          <img src="{{ charts.mood }}" alt="Mood distribution">
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

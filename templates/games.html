@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="nav_games">Games</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/home" data-i18n="nav_home">Home</a>
+        <a href="/tracker" data-i18n="nav_tracker">Daily Tracker</a>
+        <a href="/yoga" data-i18n="nav_yoga">Yoga & Exercise</a>
+        <a href="/games" data-i18n="nav_games">Games</a>
+        <a href="/chatbot" data-i18n="nav_chatbot">GynoBuddy AI</a>
+        <a href="/connections" data-i18n="nav_friends">Friends & Family</a>
+        <div class="lang-switch" style="margin-bottom:0;">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">HI</button>
+          <button class="lang-btn" data-lang="kn">KN</button>
+        </div>
+        <a href="/logout" data-i18n="nav_logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 980px;">
+      <h2 data-i18n="games_title">Take a Mood Break</h2>
+      <p style="color:#6E5F6C; margin-top:4px;" data-i18n="games_subtitle">
+        A few minutes of play can genuinely ease stress and take your mind off cramps. Pick one below.
+      </p>
+
+      <div class="games-grid">
+
+        <a href="/games/bubbles" class="game-card">
+          <div class="game-icon" style="background:linear-gradient(135deg,#8EC9BE,#2F7A6B);">🫧</div>
+          <h3 data-i18n="game1_title">Zen Bubbles</h3>
+          <p data-i18n="game1_desc">A calm 3D bubble world — pop floating bubbles at your own pace.</p>
+        </a>
+
+        <a href="/games/runner" class="game-card">
+          <div class="game-icon" style="background:linear-gradient(135deg,#D6667A,#8B3A4A);">🏃‍♀️</div>
+          <h3 data-i18n="game2_title">Aura Runner</h3>
+          <p data-i18n="game2_desc">A fast 3D lane-runner — dodge stress clouds, collect self-care hearts.</p>
+        </a>
+
+        <a href="/games/match" class="game-card">
+          <div class="game-icon" style="background:linear-gradient(135deg,#C98A2E,#8B5E1E);">🃏</div>
+          <h3 data-i18n="game3_title">Mind Match</h3>
+          <p data-i18n="game3_desc">A flipping 3D memory card game with a self-care twist.</p>
+        </a>
+
+        <a href="/games/craving" class="game-card">
+          <div class="game-icon" style="background:linear-gradient(135deg,#6B3568,#3F1B3D);">🔮</div>
+          <h3 data-i18n="game4_title">Guess My Craving</h3>
+          <p data-i18n="game4_desc">Answer a few playful questions and let us guess what you're in the mood for.</p>
+        </a>
+
+      </div>
+
+      {% if friends %}
+      <h3 style="margin-top:36px;" data-i18n="invite_title">Invite Someone to Play</h3>
+      <form method="post" action="/games/invite" class="form-card">
+        <div class="form-grid">
+          <div class="field">
+            <label data-i18n="choose_friend">Choose from My Circle</label>
+            <select name="friend_id">
+              {% for conn, other_user in friends %}
+              <option value="{{ other_user.id }}">{{ other_user.full_name }} ({{ conn.relationship_type|title }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label data-i18n="choose_game">Which Game</label>
+            <select name="game_name">
+              <option data-i18n="game1_title">Zen Bubbles</option>
+              <option data-i18n="game2_title">Aura Runner</option>
+              <option data-i18n="game3_title">Mind Match</option>
+              <option data-i18n="game4_title">Guess My Craving</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top:10px;" data-i18n="send_invite">Send Invite</button>
+      </form>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

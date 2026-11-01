@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zen Bubbles</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    #game-canvas-wrap { position: relative; width: 100%; height: 520px; border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, #1a0f22, #3F1B3D); }
+    #game-canvas-wrap canvas { display: block; }
+    #score-badge { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.9); color: #3F1B3D; padding: 8px 16px; border-radius: 999px; font-weight: 700; font-family: 'Fraunces', serif; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/games">← Games</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 900px;">
+      <h2>🫧 Zen Bubbles</h2>
+      <p style="color:#6E5F6C; margin-top:4px;">Click a bubble to pop it. Just breathe and pop, no rush, no timer.</p>
+
+      <div id="game-canvas-wrap">
+        <div id="score-badge">Popped: 0</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const wrap = document.getElementById("game-canvas-wrap");
+    const scoreBadge = document.getElementById("score-badge");
+    let score = 0;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, wrap.clientWidth / wrap.clientHeight, 0.1, 100);
+    camera.position.set(0, 0, 14);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+    wrap.appendChild(renderer.domElement);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambient);
+    const point = new THREE.PointLight(0xffc0d0, 1.2);
+    point.position.set(5, 5, 10);
+    scene.add(point);
+
+    const colors = [0xD6667A, 0x2F7A6B, 0x6B3568, 0xF3D9DD, 0x8EC9BE];
+    const bubbles = [];
+
+    function spawnBubble() {
+      const radius = 0.4 + Math.random() * 0.6;
+      const geometry = new THREE.SphereGeometry(radius, 24, 24);
+      const material = new THREE.MeshPhysicalMaterial({
+        color: colors[Math.floor(Math.random() * colors.length)],
+        transparent: true,
+        opacity: 0.75,
+        roughness: 0.1,
+        transmission: 0.3,
+        clearcoat: 1,
+      });
+      const bubble = new THREE.Mesh(geometry, material);
+      bubble.position.set(
+        (Math.random() - 0.5) * 12,
+        -8 - Math.random() * 4,
+        (Math.random() - 0.5) * 4
+      );
+      bubble.userData.speed = 0.02 + Math.random() * 0.02;
+      bubble.userData.drift = (Math.random() - 0.5) * 0.01;
+      scene.add(bubble);
+      bubbles.push(bubble);
+    }
+
+    for (let i = 0; i < 14; i++) spawnBubble();
+
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    renderer.domElement.addEventListener("click", (event) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(bubbles);
+      if (hits.length > 0) {
+        const hit = hits[0].object;
+        scene.remove(hit);
+        bubbles.splice(bubbles.indexOf(hit), 1);
+        score++;
+        scoreBadge.textContent = "Popped: " + score;
+        spawnBubble();
+      }
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      bubbles.forEach((b) => {
+        b.position.y += b.userData.speed;
+        b.position.x += b.userData.drift;
+        b.rotation.y += 0.005;
+        if (b.position.y > 8) {
+          b.position.y = -8 - Math.random() * 4;
+          b.position.x = (Math.random() - 0.5) * 12;
+        }
+      });
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = wrap.clientWidth / wrap.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+    });
+  </script>
+</body>
+</html>

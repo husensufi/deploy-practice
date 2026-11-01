@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="nav_friends">Friends & Family</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/home" data-i18n="nav_home">Home</a>
+        <a href="/tracker" data-i18n="nav_tracker">Daily Tracker</a>
+        <a href="/reports" data-i18n="nav_reports">Reports</a>
+        <a href="/doctors" data-i18n="nav_doctors">Doctors</a>
+        <a href="/yoga" data-i18n="nav_yoga">Yoga & Exercise</a>
+        <a href="/games" data-i18n="nav_games">Games</a>
+        <a href="/chatbot" data-i18n="nav_chatbot">GynoBuddy AI</a>
+        <a href="/connections" data-i18n="nav_friends">Friends & Family</a>
+        <div class="lang-switch" style="margin-bottom:0;">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="hi">HI</button>
+          <button class="lang-btn" data-lang="kn">KN</button>
+        </div>
+        <a href="/logout" data-i18n="nav_logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 900px;">
+      <h2 data-i18n="friends_title">Friends & Family</h2>
+      <p style="color:#6E5F6C; margin-top:4px;" data-i18n="friends_subtitle">
+        Connect with the people who support you. They can chat with you and you can let them know when you need care.
+      </p>
+
+      <!-- Add connection -->
+      {% if error == 'self' %}
+      <div class="auth-error" style="margin-top:20px;">You can't connect with your own account — enter a friend or partner's email instead.</div>
+      {% elif error == 'not_found' %}
+      <div class="auth-error" style="margin-top:20px;">No account is registered with that email. Ask them to sign up first, then try again.</div>
+      {% elif error == 'already_exists' %}
+      <div class="auth-error" style="margin-top:20px;">You're already connected (or have a pending request) with this person.</div>
+      {% endif %}
+      {% if success == 'request_sent' %}
+      <div class="disclaimer-box" style="margin-top:20px; background:#EAF6F1; border-color:#C7E5D9; color:#1f5a4e;">Request sent! They'll see it as a pending request once they log in.</div>
+      {% endif %}
+
+      <form method="post" action="/connections/add" class="form-card">
+        <p class="section-label" data-i18n="add_connection">Connect with someone</p>
+        <div class="form-grid" style="grid-template-columns: 2fr 1fr;">
+          <div class="field">
+            <label data-i18n="friend_email">Their registered email</label>
+            <input type="email" name="friend_email" required placeholder="name@example.com">
+          </div>
+          <div class="field">
+            <label data-i18n="relationship">Relationship</label>
+            <select name="relationship_type">
+              <option value="partner" data-i18n="rel_partner">Partner</option>
+              <option value="husband" data-i18n="rel_husband">Husband</option>
+              <option value="boyfriend" data-i18n="rel_boyfriend">Boyfriend</option>
+              <option value="brother" data-i18n="rel_brother">Brother</option>
+              <option value="sister" data-i18n="rel_sister">Sister</option>
+              <option value="friend" data-i18n="rel_friend" selected>Friend</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top:10px;" data-i18n="send_request">Send Request</button>
+      </form>
+
+      <!-- Pending incoming requests -->
+      {% if pending_incoming %}
+      <h3 style="margin-top:32px;" data-i18n="pending_requests">Pending Requests</h3>
+      <div class="connection-list">
+        {% for conn, other_user in pending_incoming %}
+        <div class="connection-card">
+          <div class="doctor-photo-placeholder" style="width:44px;height:44px;font-size:1.1rem;">{{ other_user.full_name[0] }}</div>
+          <div style="flex:1;">
+            <strong>{{ other_user.full_name }}</strong>
+            <p class="doctor-meta">{{ conn.relationship_type|title }}</p>
+          </div>
+          <form method="post" action="/connections/accept/{{ conn.id }}">
+            <button type="submit" class="btn-secondary-link" style="border:none; background:var(--teal); color:#fff;" data-i18n="accept">Accept</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Accepted connections -->
+      <h3 style="margin-top:32px;" data-i18n="my_circle">My Circle</h3>
+      {% if not connections %}
+      <div class="disclaimer-box" data-i18n="no_connections_yet">
+        No connections yet. Add someone above using their registered email.
+      </div>
+      {% else %}
+      <div class="connection-list">
+        {% for conn, other_user in connections %}
+        <div class="connection-card">
+          <div class="doctor-photo-placeholder" style="width:44px;height:44px;font-size:1.1rem;">{{ other_user.full_name[0] }}</div>
+          <div style="flex:1;">
+            <strong>{{ other_user.full_name }}</strong>
+            <p class="doctor-meta">{{ conn.relationship_type|title }}</p>
+          </div>
+          <a href="/connections/{{ other_user.id }}/chat" class="btn-secondary-link" data-i18n="chat">💬 Chat</a>
+          <form method="post" action="/connections/{{ other_user.id }}/notify">
+            <button type="submit" class="btn-secondary-link" style="border-color:var(--rose); color:var(--rose);" data-i18n="notify_care">💗 I Need Care</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

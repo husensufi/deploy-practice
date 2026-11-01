@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Runner</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    #game-canvas-wrap { position: relative; width: 100%; height: 520px; border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, #FBF5F2, #F3D9DD); }
+    #game-canvas-wrap canvas { display: block; }
+    #hud { position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.9); color: #3F1B3D; padding: 8px 16px; border-radius: 999px; font-weight: 700; font-family: 'Fraunces', serif; }
+    #game-over { position: absolute; inset: 0; background: rgba(63,27,61,0.88); color: #fff; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    #game-over h2 { color: #fff; }
+    #restart-btn { margin-top: 16px; padding: 10px 22px; border-radius: 10px; border: none; background: #D6667A; color: #fff; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/games">← Games</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 900px;">
+      <h2>🏃‍♀️ Aura Runner</h2>
+      <p style="color:#6E5F6C; margin-top:4px;">
+        Use ← / → (or A / D) to switch lanes, dodge the grey stress clouds, collect the pink hearts.
+      </p>
+
+      <div id="game-canvas-wrap">
+        <div id="hud">Score: 0</div>
+        <div id="game-over">
+          <h2>Game Over</h2>
+          <p id="final-score"></p>
+          <button id="restart-btn">Play Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const wrap = document.getElementById("game-canvas-wrap");
+    const hud = document.getElementById("hud");
+    const gameOverEl = document.getElementById("game-over");
+    const finalScoreEl = document.getElementById("final-score");
+    const restartBtn = document.getElementById("restart-btn");
+
+    const LANES = [-2.2, 0, 2.2];
+    let laneIndex = 1;
+    let score = 0;
+    let speed = 0.18;
+    let running = true;
+    let objects = []; // {mesh, type: 'obstacle'|'heart', z}
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0xFBF5F2, 8, 40);
+
+    const camera = new THREE.PerspectiveCamera(65, wrap.clientWidth / wrap.clientHeight, 0.1, 100);
+    camera.position.set(0, 3.2, 7);
+    camera.lookAt(0, 0.5, -10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+    wrap.appendChild(renderer.domElement);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.6);
+    dl.position.set(3, 8, 5);
+    scene.add(dl);
+
+    // Track (a long flat plane)
+    const track = new THREE.Mesh(
+      new THREE.PlaneGeometry(8, 200),
+      new THREE.MeshStandardMaterial({ color: 0xFFFFFF })
+    );
+    track.rotation.x = -Math.PI / 2;
+    track.position.z = -80;
+    scene.add(track);
+
+    // Lane guide lines
+    [-1.1, 1.1].forEach((x) => {
+      const line = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.05, 200),
+        new THREE.MeshBasicMaterial({ color: 0xECE0E2 })
+      );
+      line.rotation.x = -Math.PI / 2;
+      line.position.set(x, 0.01, -80);
+      scene.add(line);
+    });
+
+    // Player
+    const player = new THREE.Mesh(
+      new THREE.SphereGeometry(0.45, 24, 24),
+      new THREE.MeshStandardMaterial({ color: 0x3F1B3D })
+    );
+    player.position.set(0, 0.45, 3);
+    scene.add(player);
+
+    function spawnObject() {
+      const isHeart = Math.random() < 0.35;
+      const lane = LANES[Math.floor(Math.random() * 3)];
+      let mesh;
+      if (isHeart) {
+        mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.3, 16, 16),
+          new THREE.MeshStandardMaterial({ color: 0xD6667A, emissive: 0x330011 })
+        );
+      } else {
+        mesh = new THREE.Mesh(
+          new THREE.BoxGeometry(0.9, 0.9, 0.9),
+          new THREE.MeshStandardMaterial({ color: 0x8b8b8b })
+        );
+      }
+      mesh.position.set(lane, 0.45, -60);
+      scene.add(mesh);
+      objects.push({ mesh, type: isHeart ? "heart" : "obstacle", lane });
+    }
+
+    let spawnTimer = 0;
+
+    function resetGame() {
+      objects.forEach((o) => scene.remove(o.mesh));
+      objects = [];
+      score = 0;
+      speed = 0.18;
+      laneIndex = 1;
+      running = true;
+      gameOverEl.style.display = "none";
+      hud.textContent = "Score: 0";
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (!running) return;
+      if (e.key === "ArrowLeft" || e.key === "a") laneIndex = Math.max(0, laneIndex - 1);
+      if (e.key === "ArrowRight" || e.key === "d") laneIndex = Math.min(2, laneIndex + 1);
+    });
+
+    restartBtn.addEventListener("click", resetGame);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (running) {
+        const targetX = LANES[laneIndex];
+        player.position.x += (targetX - player.position.x) * 0.25;
+
+        speed = Math.min(0.4, speed + 0.00005);
+        spawnTimer++;
+        if (spawnTimer > 45) {
+          spawnObject();
+          spawnTimer = 0;
+        }
+
+        for (let i = objects.length - 1; i >= 0; i--) {
+          const o = objects[i];
+          o.mesh.position.z += speed * 4;
+
+          const closeEnough = Math.abs(o.mesh.position.z - player.position.z) < 0.6;
+          const sameLane = Math.abs(o.lane - player.position.x) < 0.7;
+
+          if (closeEnough && sameLane) {
+            if (o.type === "heart") {
+              score += 5;
+            } else {
+              running = false;
+              finalScoreEl.textContent = "Final Score: " + score;
+              gameOverEl.style.display = "flex";
+            }
+            scene.remove(o.mesh);
+            objects.splice(i, 1);
+            continue;
+          }
+
+          if (o.mesh.position.z > 8) {
+            scene.remove(o.mesh);
+            objects.splice(i, 1);
+            if (o.type === "obstacle") score += 1; // survived it
+          }
+        }
+        hud.textContent = "Score: " + score;
+      }
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = wrap.clientWidth / wrap.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+    });
+  </script>
+</body>
+</html>

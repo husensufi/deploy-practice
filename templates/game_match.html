@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Match</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .match-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-width: 480px;
+      margin: 24px auto 0;
+      perspective: 1000px;
+    }
+    .match-card {
+      aspect-ratio: 1;
+      position: relative;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+    }
+    .match-card.flipped { transform: rotateY(180deg); }
+    .match-card.matched { opacity: 0.4; cursor: default; }
+    .card-face {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      border-radius: 12px;
+      backface-visibility: hidden;
+    }
+    .card-back {
+      background: linear-gradient(135deg, var(--plum), var(--plum-light));
+      color: #fff; font-size: 1.4rem;
+    }
+    .card-front {
+      background: #fff;
+      border: 2px solid var(--border);
+      transform: rotateY(180deg);
+    }
+    #match-hud { text-align:center; margin-top: 16px; color: var(--ink-soft); font-size: 0.9rem; }
+    #match-win { text-align:center; margin-top: 16px; font-weight: 700; color: var(--teal); display:none; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="brand-row" style="margin-bottom:0;">
+        <div class="brand-mark"></div>
+        <div class="brand-name">Ashwini Asangi PCOS GynoCare</div>
+      </div>
+      <div class="nav-links">
+        <a href="/games">← Games</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+
+    <div class="hero-panel" style="max-width: 700px;">
+      <h2>🃏 Mind Match</h2>
+      <p style="color:#6E5F6C; margin-top:4px;">Flip two cards at a time and find all the self-care pairs.</p>
+
+      <div class="match-grid" id="match-grid"></div>
+      <p id="match-hud">Moves: 0</p>
+      <p id="match-win">🎉 You matched them all!</p>
+    </div>
+  </div>
+
+  <script>
+    const icons = ["💧","🏃","🥗","😴","🌿","💗","🧘","🍵"];
+    let deck = [...icons, ...icons];
+    deck.sort(() => Math.random() - 0.5);
+
+    const grid = document.getElementById("match-grid");
+    const hud = document.getElementById("match-hud");
+    const winMsg = document.getElementById("match-win");
+
+    let flipped = [];
+    let matchedCount = 0;
+    let moves = 0;
+    let lock = false;
+
+    deck.forEach((icon, i) => {
+      const card = document.createElement("div");
+      card.className = "match-card";
+      card.dataset.icon = icon;
+      card.innerHTML = `
+        <div class="card-face card-back">✦</div>
+        <div class="card-face card-front">${icon}</div>
+      `;
+      card.addEventListener("click", () => handleFlip(card));
+      grid.appendChild(card);
+    });
+
+    function handleFlip(card) {
+      if (lock || card.classList.contains("flipped") || card.classList.contains("matched")) return;
+      card.classList.add("flipped");
+      flipped.push(card);
+
+      if (flipped.length === 2) {
+        moves++;
+        hud.textContent = "Moves: " + moves;
+        lock = true;
+        const [a, b] = flipped;
+        if (a.dataset.icon === b.dataset.icon) {
+          a.classList.add("matched");
+          b.classList.add("matched");
+          matchedCount += 2;
+          flipped = [];
+          lock = false;
+          if (matchedCount === deck.length) {
+            winMsg.style.display = "block";
+          }
+        } else {
+          setTimeout(() => {
+            a.classList.remove("flipped");
+            b.classList.remove("flipped");
+            flipped = [];
+            lock = false;
+          }, 900);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

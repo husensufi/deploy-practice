@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Ashwini Asangi PCOS GynoCare</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="auth-shell">
+
+    <!-- Left visual panel -->
+    <div class="auth-visual">
+      <div class="cycle-ring"></div>
+      <h1 data-i18n="tagline">Your Personal PCOS Care Companion</h1>
+      <p>Track your cycle, symptoms and habits. Get doctor-ready reports.
+         Let the people who care about you understand and support you —
+         every single day, not just on hard days.</p>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="auth-form-side">
+      <div class="auth-card">
+
+        <div class="brand-row">
+          <div class="brand-mark"></div>
+          <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+        </div>
+
+        <div class="lang-switch">
+          <button class="lang-btn" data-lang="en">English</button>
+          <button class="lang-btn" data-lang="hi">हिंदी</button>
+          <button class="lang-btn" data-lang="kn">ಕನ್ನಡ</button>
+        </div>
+
+        <h2 data-i18n="login_title">Welcome Back</h2>
+        <p class="auth-subtitle" data-i18n="tagline">Your Personal PCOS Care Companion</p>
+
+        {% if error %}
+        <div class="auth-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/login">
+          <div class="field">
+            <label data-i18n="email">Email Address</label>
+            <input type="email" name="email" required placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label data-i18n="password">Password</label>
+            <input type="password" name="password" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn-primary" data-i18n="login_button">Login</button>
+        </form>
+
+        <div class="auth-links">
+          <a href="#" data-i18n="forgot_password">Forgot Password?</a>
+          &nbsp;·&nbsp;
+          <span data-i18n="no_account">Don't have an account?</span>
+          <a href="/signup" data-i18n="register_now">Register Now</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/js/lang.js"></script>
+</body>
+</html>

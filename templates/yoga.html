@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="nav_yoga">Yoga & Exercise</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="topbar">
+    <div class="brand-row" style="margin-bottom:0;">
+      <div class="brand-mark"></div>
+      <div class="brand-name" data-i18n="app_name">Ashwini Asangi PCOS GynoCare</div>
+    </div>
+    <div class="nav-links">
+      <a href="/home" data-i18n="nav_home">Home</a>
+      <a href="/tracker" data-i18n="nav_tracker">Daily Tracker</a>
+      <a href="/yoga" data-i18n="nav_yoga">Yoga & Exercise</a>
+      <a href="/games" data-i18n="nav_games">Games</a>
+      <a href="/chatbot" data-i18n="nav_chatbot">GynoBuddy AI</a>
+      <a href="/connections" data-i18n="nav_friends">Friends & Family</a>
+      <div class="lang-switch" style="margin-bottom:0;">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="hi">HI</button>
+        <button class="lang-btn" data-lang="kn">KN</button>
+      </div>
+      <a href="/logout" data-i18n="nav_logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="hero-panel" style="max-width: 1000px;">
+
+    <h2 data-i18n="yoga_title">Yoga & Exercise for PCOS</h2>
+    <p style="color:#6E5F6C; margin-top:4px;" data-i18n="yoga_subtitle">Gentle movement to support hormone balance, weight and stress.</p>
+
+    <!-- Poster strip -->
+    <div class="poster-strip">
+      <div class="poster poster-a"><span data-i18n="poster_1">Move gently. Heal steadily.</span></div>
+      <div class="poster poster-b"><span data-i18n="poster_2">PCOS is part of your story, not all of it.</span></div>
+      <div class="poster poster-c"><span data-i18n="poster_3">Small steps every day add up.</span></div>
+    </div>
+
+    <div class="disclaimer-box" data-i18n="yoga_disclaimer">Yoga can help manage PCOS symptoms but does not cure PCOS. Check with your doctor first.</div>
+
+    <!-- Animated breathing guide -->
+    <div class="breath-card">
+      <div class="breath-circle" id="breath-circle"></div>
+      <div>
+        <h3 data-i18n="breathing_title">Breathe with the circle</h3>
+        <p id="breath-text" class="breath-text" data-i18n="inhale">Breathe in</p>
+        <button class="btn-primary" id="session-start" style="width:auto; padding:11px 22px; margin-top:12px;" data-i18n="start_session">▶ Start guided session</button>
+      </div>
+    </div>
+
+    <!-- Guided session overlay -->
+    <div id="session-overlay" class="session-overlay">
+      <div class="session-box">
+        <div id="session-emoji" style="font-size:3.5rem;"></div>
+        <h2 id="session-pose" style="margin:8px 0;"></h2>
+        <p id="session-desc" style="color:#6E5F6C; min-height:44px;"></p>
+        <div id="session-count" class="session-count">30</div>
+        <button class="btn-secondary-link" id="session-stop" data-i18n="stop_session">Stop</button>
+      </div>
+    </div>
+
+    <!-- Pose cards -->
+    <div class="yoga-grid">
+      {% set poses = [
+        ("butterfly", "🦋", "butterfly pose baddha konasana for pcos"),
+        ("cobra", "🐍", "cobra pose bhujangasana for pcos"),
+        ("child", "🧎‍♀️", "child pose balasana for cramps"),
+        ("bridge", "🌉", "bridge pose setu bandhasana for pcos"),
+        ("catcow", "🐈", "cat cow stretch for period cramps"),
+        ("breathing", "🌬️", "anulom vilom pranayama for stress"),
+      ] %}
+      {% for slug, emoji, query in poses %}
+      <div class="yoga-card" data-emoji="{{ emoji }}">
+        <div class="yoga-img yoga-bg-{{ loop.index }}">
+          <span class="yoga-emoji">{{ emoji }}</span>
+          <img src="/static/img/yoga/{{ slug }}.jpg" alt="" onerror="this.style.display='none'">
+        </div>
+        <div class="yoga-body">
+          <h3 class="pose-name" data-i18n="yoga_{{ slug }}_name">{{ slug }}</h3>
+          <p class="pose-desc" data-i18n="yoga_{{ slug }}_desc"></p>
+          <a class="btn-secondary-link" style="font-size:0.82rem; padding:8px 14px;" target="_blank" rel="noopener"
+             href="https://www.youtube.com/results?search_query={{ query|replace(' ', '+') }}" data-i18n="watch_video">▶ Watch tutorial</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<script src="/static/js/lang.js"></script>
+<script>
+  // ---- Breathing guide: 4s in, 6s out ----
+  const circle = document.getElementById("breath-circle");
+  const breathText = document.getElementById("breath-text");
+  let inhaling = true;
+  function breathStep() {
+    circle.classList.toggle("expanded", inhaling);
+    breathText.setAttribute("data-i18n", inhaling ? "inhale" : "exhale");
+    applyLanguage(localStorage.getItem("pcos_lang") || "en");
+    setTimeout(() => { inhaling = !inhaling; breathStep(); }, inhaling ? 4000 : 6000);
+  }
+  breathStep();
+
+  // ---- Guided session: each pose for 30 seconds ----
+  const overlay = document.getElementById("session-overlay");
+  let timer = null;
+  function stopSession() { clearInterval(timer); overlay.style.display = "none"; }
+
+  document.getElementById("session-start").addEventListener("click", () => {
+    const cards = [...document.querySelectorAll(".yoga-card")];
+    let idx = 0, left = 30;
+    overlay.style.display = "flex";
+
+    function show() {
+      const c = cards[idx];
+      document.getElementById("session-pose").removeAttribute("data-i18n");
+      document.getElementById("session-emoji").textContent = c.dataset.emoji;
+      document.getElementById("session-pose").textContent = c.querySelector(".pose-name").textContent;
+      document.getElementById("session-desc").textContent = c.querySelector(".pose-desc").textContent;
+      document.getElementById("session-count").textContent = left;
+    }
+    show();
+    timer = setInterval(() => {
+      left--;
+      if (left <= 0) {
+        idx++; left = 30;
+        if (idx >= cards.length) {
+          clearInterval(timer);
+          document.getElementById("session-emoji").textContent = "🎉";
+          document.getElementById("session-pose").setAttribute("data-i18n", "session_done");
+          applyLanguage(localStorage.getItem("pcos_lang") || "en");
+          document.getElementById("session-desc").textContent = "";
+          document.getElementById("session-count").textContent = "";
+          return;
+        }
+      }
+      show();
+    }, 1000);
+  });
+  document.getElementById("session-stop").addEventListener("click", stopSession);
+</script>
+</body>
+</html>

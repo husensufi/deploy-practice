@@ -33,6 +33,8 @@ def ensure_user_schema(db: Session) -> None:
         ("token_version", "INTEGER NOT NULL DEFAULT 0"),
         ("is_removed", "BOOLEAN NOT NULL DEFAULT 0"),
         ("removed_at", "DATETIME"),
+        ("gender", "VARCHAR"),
+        ("date_of_birth", "VARCHAR"),
     ]
 
     for column_name, ddl in additions:
@@ -75,8 +77,32 @@ def ensure_doctor_profile_schema(db: Session) -> None:
         return
 
     columns = {column["name"] for column in inspector.get_columns("doctor_profiles")}
-    if "years_experience" not in columns:
-        db.execute(text("ALTER TABLE doctor_profiles ADD COLUMN years_experience INTEGER"))
+    additions = [
+        ("years_experience", "INTEGER"),
+        ("medical_reg_no", "VARCHAR"),
+        ("qualification", "VARCHAR"),
+        ("consultation_fee", "INTEGER"),
+        ("registered_by_admin_id", "INTEGER"),
+    ]
+    for column_name, ddl in additions:
+        if column_name not in columns:
+            db.execute(text(f"ALTER TABLE doctor_profiles ADD COLUMN {column_name} {ddl}"))
+
+    index_sql = db.execute(
+        text(
+            "SELECT sql FROM sqlite_master "
+            "WHERE type = 'index' AND name = 'uq_doctor_profiles_medical_reg_no'"
+        )
+    ).scalar()
+    if index_sql and "lower(medical_reg_no)" not in index_sql.lower():
+        db.execute(text("DROP INDEX uq_doctor_profiles_medical_reg_no"))
+    db.execute(
+        text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_doctor_profiles_medical_reg_no "
+            "ON doctor_profiles (lower(medical_reg_no)) "
+            "WHERE medical_reg_no IS NOT NULL AND medical_reg_no != ''"
+        )
+    )
     db.commit()
 
 

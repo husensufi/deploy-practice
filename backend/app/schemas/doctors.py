@@ -15,6 +15,9 @@ class DoctorProfileSubmitRequest(BaseModel):
     )
     about: str = Field(default="", max_length=5000)
     photo_url: str = Field(default="", max_length=2000)
+    medical_reg_no: str | None = Field(default=None, max_length=100)
+    qualification: str | None = Field(default=None, max_length=255)
+    consultation_fee: int | None = Field(default=None, ge=0)
 
 
 class DoctorDirectoryEntry(BaseModel):
@@ -30,6 +33,9 @@ class DoctorDirectoryEntry(BaseModel):
     consultation_hours: str
     about: str | None
     photo_url: str | None
+    medical_reg_no: str | None = None
+    qualification: str | None = None
+    consultation_fee: int | None = None
 
 
 class DoctorProfileResponse(BaseModel):
@@ -46,4 +52,7 @@ class DoctorProfileResponse(BaseModel):
     consultation_hours: str
     about: str | None
     photo_url: str | None
+    medical_reg_no: str | None = None
+    qualification: str | None = None
+    consultation_fee: int | None = None
     updated_at: datetime | None

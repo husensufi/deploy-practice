@@ -37,6 +37,8 @@ class User(Base):
 
     # Preferred language: "en", "hi", or "kn"
     preferred_language = Column(String, default="en")
+    gender = Column(String, nullable=True)
+    date_of_birth = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

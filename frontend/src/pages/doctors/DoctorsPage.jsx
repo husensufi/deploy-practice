@@ -55,6 +55,25 @@ function doctorLocation(doctor) {
   return address.length ? address.join(", ") : "Location not listed";
 }
 
+function DoctorAvatar({ doctor }) {
+  const [photoUnavailable, setPhotoUnavailable] = useState(false);
+  if (doctor.photo_url && !photoUnavailable) {
+    return (
+      <img
+        className="doctor-avatar doctor-avatar--photo"
+        src={doctor.photo_url}
+        alt={`Dr. ${doctor.full_name}`}
+        onError={() => setPhotoUnavailable(true)}
+      />
+    );
+  }
+  return (
+    <div className="doctor-avatar" aria-hidden="true">
+      {doctor.full_name.slice(0, 1).toUpperCase()}
+    </div>
+  );
+}
+
 export default function DoctorsPage() {
   const queryClient = useQueryClient();
   const bookingCard = useRef(null);
@@ -154,15 +173,26 @@ export default function DoctorsPage() {
         <div className="doctor-grid">
           {data.map((doctor) => (
             <article className="summary-card doctor-card" key={doctor.id}>
-              <div className="doctor-avatar" aria-hidden="true">
-                {doctor.full_name.slice(0, 1).toUpperCase()}
-              </div>
+              <DoctorAvatar doctor={doctor} />
               <div>
                 <h2>Dr. {doctor.full_name}</h2>
-                <p className="eyebrow">{doctor.specialization}</p>
+                <p className="eyebrow">
+                  {doctor.qualification ? `${doctor.qualification} · ` : ""}
+                  {doctor.specialization}
+                </p>
+                {doctor.medical_reg_no && (
+                  <p className="muted" style={{ fontSize: "0.85rem", margin: "2px 0 6px" }}>
+                    Reg. No: <strong>{doctor.medical_reg_no}</strong>
+                  </p>
+                )}
                 <p>{doctor.clinic_name}</p>
                 <p className="muted">{doctor.address}, {doctor.city}</p>
                 <p className="muted">{doctor.consultation_hours}</p>
+                {doctor.consultation_fee != null && (
+                  <p style={{ fontWeight: 600, color: "#6b244a", margin: "4px 0" }}>
+                    Fee: ₹{doctor.consultation_fee}
+                  </p>
+                )}
                 {doctor.about && <p>{doctor.about}</p>}
                 <a className="text-link" href={`tel:${doctor.phone}`}>{doctor.phone}</a>
                 <button
@@ -219,7 +249,20 @@ export default function DoctorsPage() {
                 )}
                 <div>
                   <h2>Dr. {selectedDoctor.full_name}</h2>
-                  <span className="booking-specialization">{selectedDoctor.specialization}</span>
+                  <span className="booking-specialization">
+                    {selectedDoctor.qualification ? `${selectedDoctor.qualification} · ` : ""}
+                    {selectedDoctor.specialization}
+                  </span>
+                  {selectedDoctor.medical_reg_no && (
+                    <span className="muted" style={{ display: "block", fontSize: "0.85rem", marginTop: 2 }}>
+                      Reg: {selectedDoctor.medical_reg_no}
+                    </span>
+                  )}
+                  {selectedDoctor.consultation_fee != null && (
+                    <span style={{ display: "block", fontWeight: 600, color: "#6b244a", fontSize: "0.9rem", marginTop: 2 }}>
+                      Fee: ₹{selectedDoctor.consultation_fee}
+                    </span>
+                  )}
                 </div>
               </div>
               <ul className="booking-doctor-facts">

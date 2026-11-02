@@ -26,5 +26,9 @@ class DoctorProfile(Base):
     consultation_hours = Column(String, default="Mon–Sat, 10 AM – 6 PM")
     about = Column(Text, nullable=True)
     photo_url = Column(String, nullable=True)  # optional; a placeholder is shown if empty
+    medical_reg_no = Column(String, nullable=True, index=True)
+    qualification = Column(String, nullable=True)
+    consultation_fee = Column(Integer, nullable=True)
+    registered_by_admin_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

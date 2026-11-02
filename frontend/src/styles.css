@@ -676,6 +676,10 @@ h1 {
   font-weight: 700;
 }
 
+.doctor-avatar--photo {
+  object-fit: cover;
+}
+
 .connection-form-fields {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
@@ -2556,4 +2560,133 @@ h1 {
     right: 16px;
     bottom: 16px;
   }
+}
+
+
+/* Admin Doctor Registration & Actions Styling */
+.admin-action--edit {
+  background: #844163;
+}
+
+.admin-action--reset {
+  background: #5b4a82;
+}
+
+.admin-header-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-register-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #6b244a;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid #541c3a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgb(107 36 74 / 20%);
+}
+
+.admin-register-button:hover {
+  background: #521b38;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgb(107 36 74 / 28%);
+}
+
+.admin-modal-wide {
+  width: min(100%, 880px);
+  max-height: min(90vh, 880px);
+  overflow-y: auto;
+}
+
+.admin-form-section {
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #fdfafb;
+  border: 1px solid #f2e2e8;
+}
+
+.admin-form-section-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #521b38;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #eed8e2;
+  padding-bottom: 8px;
+}
+
+.admin-form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.admin-form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.admin-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eadce2;
+}
+
+.admin-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #4a2842;
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #6b244a;
+  cursor: pointer;
+}
+
+.admin-detail-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e8a5b8;
+  margin-bottom: 12px;
+}
+
+.admin-detail-avatar-fallback {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #6b244a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 12px;
 }

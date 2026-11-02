@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.legacy import DoctorProfile, User
@@ -44,6 +46,9 @@ def list_doctors(
             consultation_hours=profile.consultation_hours,
             about=profile.about,
             photo_url=profile.photo_url,
+            medical_reg_no=getattr(profile, "medical_reg_no", None),
+            qualification=getattr(profile, "qualification", None),
+            consultation_fee=getattr(profile, "consultation_fee", None),
         )
         for profile, doctor in rows
     ]
@@ -79,9 +84,34 @@ def update_my_doctor_profile(
     values = body.model_dump()
     values["photo_url"] = values["photo_url"] or None
     values["about"] = values["about"] or None
+    medical_reg_no = values["medical_reg_no"]
+    if medical_reg_no:
+        medical_reg_no = medical_reg_no.strip()
+        conflict = (
+            db.query(DoctorProfile.id)
+            .filter(
+                func.lower(DoctorProfile.medical_reg_no) == medical_reg_no.lower(),
+                DoctorProfile.user_id != user.id,
+            )
+            .first()
+        )
+        if conflict:
+            raise HTTPException(
+                status_code=409,
+                detail="A doctor with this medical registration number already exists.",
+            )
+    values["medical_reg_no"] = medical_reg_no or None
     for field, value in values.items():
-        setattr(profile, field, value)
-    db.commit()
+        if hasattr(profile, field):
+            setattr(profile, field, value)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="A doctor with this medical registration number already exists.",
+        ) from exc
     db.refresh(profile)
     return profile
 
@@ -121,4 +151,7 @@ def get_doctor(
         consultation_hours=profile.consultation_hours,
         about=profile.about,
         photo_url=profile.photo_url,
+        medical_reg_no=getattr(profile, "medical_reg_no", None),
+        qualification=getattr(profile, "qualification", None),
+        consultation_fee=getattr(profile, "consultation_fee", None),
     )

@@ -116,6 +116,173 @@ describe("Admin management sections", () => {
     });
   });
 
+  it("displays the prominent + Register New Doctor button and registers a doctor", async () => {
+    apiRequestMock.mockImplementation((path, options) => {
+      if (path.startsWith("/admin/doctors?")) return Promise.resolve([]);
+      if (path === "/admin/doctors" && options?.method === "POST") {
+        return Promise.resolve({
+          id: 12,
+          full_name: "Dr. Maya Sharma",
+          email: "maya.sharma@example.com",
+          role: "doctor",
+          is_active: true,
+          approval_status: "approved",
+          specialization: "Gynecologist",
+          medical_reg_no: "KMC-48201",
+        });
+      }
+      throw new Error(`Unexpected API request: ${path}`);
+    });
+
+    renderPage("doctors");
+
+    const registerBtn = await screen.findByRole("button", { name: /\+ Register New Doctor/i });
+    expect(registerBtn).toBeTruthy();
+
+    fireEvent.click(registerBtn);
+    expect(await screen.findByRole("heading", { name: "Register New Doctor" })).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText("Dr. Jane Doe"), {
+      target: { value: "Maya Sharma" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("doctor@example.com"), {
+      target: { value: "maya.sharma@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("+91 9876543210"), {
+      target: { value: "+91 9888877777" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("e.g. MCI-2015-84920"), {
+      target: { value: "KMC-48201" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("MBBS, MD, MS, DGO, etc."), {
+      target: { value: "MBBS, MD (OBG)" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Gynecologist, Endocrinologist, etc."), {
+      target: { value: "Gynecologist" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("e.g. Apollo Cradle / Lotus Women Care"), {
+      target: { value: "Care Hospital" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("e.g. #42 5th Cross, Indiranagar"), {
+      target: { value: "12th Main Road, Indiranagar" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Minimum 8 characters"), {
+      target: { value: "DoctorTemp123" },
+    });
+    fireEvent.change(screen.getByLabelText("Approval Status"), {
+      target: { value: "approved" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Register Doctor" }));
+
+    await waitFor(() => {
+      expect(apiRequestMock).toHaveBeenCalledWith("/admin/doctors", expect.objectContaining({
+        method: "POST",
+        data: expect.objectContaining({
+          full_name: "Maya Sharma",
+          email: "maya.sharma@example.com",
+          mobile: "+91 9888877777",
+          medical_reg_no: "KMC-48201",
+          qualification: "MBBS, MD (OBG)",
+          specialization: "Gynecologist",
+          clinic_name: "Care Hospital",
+          address: "12th Main Road, Indiranagar",
+          approval_status: "approved",
+          is_active: true,
+        }),
+      }));
+    });
+
+    expect(await screen.findByRole("status")).toBeTruthy();
+  });
+
+  it("edits an existing doctor profile via Edit modal", async () => {
+    const doctor = {
+      id: 9,
+      full_name: "Anita Rao",
+      email: "anita@example.test",
+      role: "doctor",
+      mobile: "+91 9123456789",
+      specialization: "Gynecologist",
+      medical_reg_no: "KMC-11223",
+      qualification: "MBBS, MS",
+      clinic_name: "City Care",
+      address: "MG Road",
+      city: "Bangalore",
+      is_active: true,
+      approval_status: "approved",
+      is_removed: false,
+    };
+    apiRequestMock.mockImplementation((path, options) => {
+      if (path.startsWith("/admin/doctors?")) return Promise.resolve([doctor]);
+      if (path === "/admin/doctors/9" && options?.method === "PUT") {
+        return Promise.resolve({ ...doctor, ...options.data });
+      }
+      throw new Error(`Unexpected API request: ${path}`);
+    });
+
+    renderPage("doctors");
+
+    fireEvent.click(await screen.findByRole("button", { name: /Edit/i }));
+    expect(await screen.findByRole("heading", { name: "Edit Doctor Details" })).toBeTruthy();
+
+    const clinicInput = screen.getByDisplayValue("City Care");
+    fireEvent.change(clinicInput, { target: { value: "Apollo Women Wellness" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    await waitFor(() => {
+      expect(apiRequestMock).toHaveBeenCalledWith("/admin/doctors/9", expect.objectContaining({
+        method: "PUT",
+        data: expect.objectContaining({
+          clinic_name: "Apollo Women Wellness",
+        }),
+      }));
+    });
+  });
+
+  it("resets doctor password and sends account invitation", async () => {
+    const doctor = {
+      id: 10,
+      full_name: "Rohit Verma",
+      email: "rohit@example.test",
+      role: "doctor",
+      is_active: true,
+      approval_status: "approved",
+      is_removed: false,
+    };
+    apiRequestMock.mockImplementation((path, options) => {
+      if (path.startsWith("/admin/doctors?")) return Promise.resolve([doctor]);
+      if (path === "/admin/doctors/10/reset-password" && options?.method === "POST") {
+        return Promise.resolve({
+          status: "success",
+          message: "Doctor credentials updated and account invitation instructions recorded.",
+        });
+      }
+      throw new Error(`Unexpected API request: ${path}`);
+    });
+
+    renderPage("doctors");
+
+    fireEvent.click(await screen.findByRole("button", { name: /Reset \/ Invite/i }));
+    expect(await screen.findByRole("heading", { name: "Reset Password / Send Invitation" })).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText("Minimum 8 characters"), {
+      target: { value: "NewDoctorPass123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm & Send" }));
+
+    await waitFor(() => {
+      expect(apiRequestMock).toHaveBeenCalledWith("/admin/doctors/10/reset-password", expect.objectContaining({
+        method: "POST",
+        data: expect.objectContaining({
+          new_password: "NewDoctorPass123",
+          send_invitation: true,
+        }),
+      }));
+    });
+  });
+
   it("requests the approval PDF with the selected status and record limit", async () => {
     apiRequestMock.mockImplementation((path) => {
       if (path.startsWith("/admin/doctors?")) return Promise.resolve([]);

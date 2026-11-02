@@ -103,6 +103,10 @@ The independent backend uses Pydantic request/response schemas. Protected endpoi
 | GET | `/api/v1/admin/patients/{patient_id}` | Admin-only patient details and appointment history |
 | POST | `/api/v1/admin/patients/{patient_id}/status` | Admin-only `active`, `inactive`, or soft `removed` account status |
 | GET | `/api/v1/admin/doctors` | Admin-only doctor list; supports approval status, name/email search, application date range, record limit, and offset |
+| POST | `/api/v1/admin/doctors` | Admin-only doctor account and professional profile registration; requires contact, medical registration, qualification, clinic, and temporary password; hashes the password and creates both records atomically |
+| PUT | `/api/v1/admin/doctors/{doctor_id}` | Admin-only update of doctor account and professional profile; preserves appointment history and rejects duplicate email or registration numbers |
+| POST | `/api/v1/admin/doctors/{doctor_id}/reset-password` | Admin-only password reset; accepts a new temporary password and never returns it |
+| DELETE | `/api/v1/admin/doctors/{doctor_id}` | Admin-only soft removal; preserves appointments and historical records |
 | GET | `/api/v1/admin/doctors/approval-summary` | Admin-only counts for pending, approved, and rejected applications |
 | GET | `/api/v1/admin/doctors/approval-report.pdf` | Admin-only PDF export using the same status, search, date, and record-limit filters |
 | GET | `/api/v1/admin/doctors/{doctor_id}` | Admin-only doctor profile and approval decision history |

@@ -2,7 +2,7 @@
 
 ## Inspection scope
 
-This is the Phase 1 baseline for the existing Ashwini Asangi PCOS GynoCare application. The original source files and SQLite database were not changed during inspection. Database metadata and row counts were read through a read-only SQLite connection.
+This is the Phase 1 baseline for the existing PCOS GynoCare application. The original source files and SQLite database were not changed during inspection. Database metadata and row counts were read through a read-only SQLite connection.
 
 ## Existing application
 

@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 # A good practice is to load it from an environment variable instead
 # of writing it directly in code. We'll do that in Part 5.
 # ---------------------------------------------------------------
-SECRET_KEY = "ashwini-asangi-pcos-gynocare-CHANGE-THIS-SECRET-KEY"
+SECRET_KEY = "pcos-gynocare-CHANGE-THIS-SECRET-KEY"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # token valid for 7 days
 

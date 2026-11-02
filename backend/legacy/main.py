@@ -61,7 +61,7 @@ TEMPLATE_ROOT = FRONTEND_ROOT / "legacy_templates"
 # ---- Create all database tables the first time the app runs ----
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Ashwini Asangi PCOS GynoCare")
+app = FastAPI(title="PCOS GynoCare")
 
 # ---- Serve static files (css, js, images) ----
 app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")

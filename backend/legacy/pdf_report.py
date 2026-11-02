@@ -47,7 +47,7 @@ def build_pdf_report(user, profile, result, logs) -> bytes:
     elements = []
 
     # ---- Header ----
-    elements.append(Paragraph("Ashwini Asangi PCOS GynoCare", title_style))
+    elements.append(Paragraph("PCOS GynoCare", title_style))
     elements.append(Paragraph("PCOS Screening &amp; Habit Report", styles["Heading3"]))
     elements.append(Paragraph(
         f"Generated on {datetime.now().strftime('%d %B %Y, %I:%M %p')}", small_grey

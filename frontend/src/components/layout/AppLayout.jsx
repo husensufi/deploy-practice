@@ -39,7 +39,7 @@ export default function AppLayout() {
       <header className="portal-header">
         <Link className="brand" to="/home">
           <span className="brand-mark" aria-hidden="true" />
-          <span>Ashwini Asangi PCOS GynoCare</span>
+          <span>PCOS GynoCare</span>
         </Link>
         <nav className="portal-nav" aria-label="Main navigation">
           {user?.role === "admin" ? (

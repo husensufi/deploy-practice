@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.database.session import SessionLocal
 
 app = FastAPI(
-    title="Ashwini Asangi PCOS GynoCare API",
+    title="PCOS GynoCare API",
     version="1.0.0",
     description="Independent API for the PCOS GynoCare React application.",
 )

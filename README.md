@@ -1,4 +1,4 @@
-# Ashwini Asangi PCOS GynoCare
+# PCOS GynoCare
 
 PCOS GynoCare is a health-support application with a legacy FastAPI/Jinja2 interface and a newer React/Vite frontend backed by a modular FastAPI API. The migration is in progress: the legacy application remains available while features are moved to the new frontend.
 

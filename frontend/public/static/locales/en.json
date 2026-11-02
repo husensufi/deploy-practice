@@ -1,5 +1,5 @@
 {
-  "app_name": "Ashwini Asangi PCOS GynoCare",
+  "app_name": "PCOS GynoCare",
   "tagline": "Your Personal PCOS Care Companion",
   "nav_home": "Home",
   "nav_tracker": "Daily Tracker",
@@ -82,7 +82,7 @@
   "no_logs_yet": "No tracker entries yet — start logging on the Daily Tracker page to see your charts here.",
   "my_clinic_profile": "My Clinic Profile",
   "doctors_title": "Gynecologists Near You",
-  "doctors_subtitle": "Doctors who have registered on Ashwini Asangi PCOS GynoCare.",
+  "doctors_subtitle": "Doctors who have registered on PCOS GynoCare.",
   "no_doctors_yet": "No doctors have registered yet. Ask your gynecologist to sign up with the \"Doctor\" role and fill their clinic profile.",
   "doctor_form_subtitle": "This information appears in the public Doctors directory for patients to find you.",
   "clinic_name": "Clinic / Hospital Name",

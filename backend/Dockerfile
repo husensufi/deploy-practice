@@ -2,13 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY backend/requirements.txt /app/backend/requirements.txt
+COPY requirements.txt /app/backend/requirements.txt
 RUN python -m pip install --no-cache-dir -r /app/backend/requirements.txt
 
-COPY backend/__init__.py /app/backend/__init__.py
-COPY backend/ai /app/backend/ai
-COPY backend/app /app/backend/app
-COPY backend/legacy /app/backend/legacy
+COPY __init__.py /app/backend/__init__.py
+COPY ai /app/backend/ai
+COPY app /app/backend/app
+COPY legacy /app/backend/legacy
 
 ENV PYTHONPATH="/app/backend:/app"
 EXPOSE 8000
